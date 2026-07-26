@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Leaflet CSS — must be imported for map controls to render */
+@import "leaflet/dist/leaflet.css";
+@import "leaflet.markercluster/dist/MarkerCluster.css";
+@import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+
 :root {
   --fresh-green: #22c55e;
   --austin-orange: #f97316;
@@ -26,7 +31,142 @@ body {
   z-index: 1;
 }
 
+/* Custom vendor marker */
+.vendor-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border: 3px solid #fff;
+  transition: transform 0.15s ease;
+  cursor: pointer;
+  position: relative;
+}
+.vendor-marker.fresh {
+  background: #22c55e;
+  border-color: #fff;
+}
+.vendor-marker.stale {
+  background: #9ca3af;
+  border-color: #fff;
+}
+
+/* Pulse ring for fresh vendors */
+.vendor-marker.fresh::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 3px solid #22c55e;
+  animation: fresh-pulse 2s ease-in-out infinite;
+}
+@keyframes fresh-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0; }
+}
+
+/* Cluster customization */
+.marker-cluster-small {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+}
+.marker-cluster-small div {
+  background-color: rgba(34, 197, 94, 0.7) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+.marker-cluster-medium {
+  background-color: rgba(249, 115, 22, 0.2) !important;
+}
+.marker-cluster-medium div {
+  background-color: rgba(249, 115, 22, 0.7) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+.marker-cluster-large {
+  background-color: rgba(220, 38, 38, 0.2) !important;
+}
+.marker-cluster-large div {
+  background-color: rgba(220, 38, 38, 0.7) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+
+/* Find Me button */
+.find-me-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  cursor: pointer;
+  font-size: 20px;
+  transition: background 0.15s;
+}
+.find-me-btn:active {
+  background: #f3f4f6;
+}
+
+/* Bottom sheet styles */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.bottom-sheet {
+  width: 100%;
+  max-width: 28rem;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 1rem 1rem 0 0;
+  overflow-y: auto;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+  animation: slide-up 0.25s ease-out;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.bottom-sheet-handle {
+  width: 2rem;
+  height: 4px;
+  border-radius: 2px;
+  background: #d1d5db;
+  margin: 0.5rem auto 0;
+}
+
+/* Category filter scrollbar hide */
+.category-scroll::-webkit-scrollbar {
+  display: none;
+}
+.category-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Mobile bottom nav safe area */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Leaflet popup compact */
+.leaflet-popup-content {
+  margin: 8px 10px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
 }
