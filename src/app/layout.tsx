@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Nunito, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
+import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 const nunito = Nunito({
   subsets: ["latin"],

@@ -2,11 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Leaflet CSS — must be imported for map controls to render */
-@import "leaflet/dist/leaflet.css";
-@import "leaflet.markercluster/dist/MarkerCluster.css";
-@import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-
 :root {
   --sage: #7C9082;
   --terra: #C2765C;
