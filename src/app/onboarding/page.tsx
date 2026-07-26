@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Store,
   ClipboardCheck,
-  Package,
   Check,
   MapPin,
   Leaf,
@@ -32,17 +31,6 @@ interface FormData {
   allowedFoodsAck: boolean;
   labelingAck: boolean;
   acceptsMessages: boolean;
-  itemName: string;
-  itemCategory: string;
-  itemDescription: string;
-  price: string;
-  quantity: string;
-  itemPhotoUrl: string;
-  dietaryTags: string[];
-  pickupStart: string;
-  pickupEnd: string;
-  ingredients: string;
-  allergenWarning: string;
 }
 
 /* ── Constants ─────────────────────────────────────────────── */
@@ -66,17 +54,6 @@ const CATEGORIES = [
   { name: "Meat & Poultry", slug: "meat", icon: "🥩" },
   { name: "Food Truck", slug: "food-truck", icon: "🚚" },
   { name: "Other", slug: "other", icon: "📦" },
-];
-
-const DIETARY_OPTIONS = [
-  "gluten-free", "vegan", "vegetarian", "dairy-free",
-  "nut-free", "keto", "organic",
-];
-
-const ITEM_CATEGORIES = [
-  "Bread", "Pastry", "Cake", "Cookies", "Pie", "Eggs", "Honey",
-  "Jam/Preserves", "Vegetables", "Fruit", "Herbs", "Meal Prep",
-  "Dinner", "Lunch", "Flowers", "Plants", "Other",
 ];
 
 const STORAGE_KEY = "freshfinds_onboarding";
@@ -112,9 +89,6 @@ function getEmptyForm(): FormData {
     bio: "", photoUrl: "", state: "TX",
     complianceChecked: false, homeKitchenAck: false,
     allowedFoodsAck: false, labelingAck: false, acceptsMessages: false,
-    itemName: "", itemCategory: "", itemDescription: "",
-    price: "", quantity: "", itemPhotoUrl: "", dietaryTags: [],
-    pickupStart: "", pickupEnd: "", ingredients: "", allergenWarning: "",
   };
 }
 
@@ -166,14 +140,10 @@ export default function OnboardingPage() {
   const step2Valid =
     form.bio.trim().length >= 10 && form.complianceChecked &&
     form.homeKitchenAck && form.allowedFoodsAck && form.labelingAck;
-  const step3Valid =
-    form.itemName.trim().length >= 2 && form.itemCategory !== "" &&
-    form.itemDescription.trim().length >= 5 && form.price !== "" &&
-    !isNaN(parseFloat(form.price)) && parseFloat(form.price) > 0;
 
   /* ── Submit ──────────────────────────────────────────────── */
   const handleSubmit = async () => {
-    if (!step3Valid) return;
+    if (!step2Valid) return;
     setSubmitting(true);
     setError(null);
 
@@ -200,24 +170,6 @@ export default function OnboardingPage() {
       const vendorData = await vendorRes.json();
       const vendorId = vendorData.vendor.id;
 
-      const listingRes = await fetch("/api/listings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendorId, title: form.itemName,
-          description: form.itemDescription,
-          price: parseFloat(form.price),
-          quantity: form.quantity ? parseInt(form.quantity) : null,
-          photoUrl: form.itemPhotoUrl, dietaryTags: form.dietaryTags,
-          pickupWindowStart: form.pickupStart || new Date().toISOString(),
-          pickupWindowEnd: form.pickupEnd || new Date(Date.now() + 86400000).toISOString(),
-          ingredients: form.ingredients || null,
-          allergenWarning: form.allergenWarning || null,
-        }),
-      });
-
-      if (!listingRes.ok) throw new Error("Failed to create listing");
-
       setCreatedVendorId(vendorId);
       setCompleted(true);
       clearDraft();
@@ -237,16 +189,15 @@ export default function OnboardingPage() {
             <Check className="w-12 h-12 text-sage-600" strokeWidth={2} />
           </div>
           <h1 className="text-2xl font-bold font-serif text-ink mb-3">
-            You&apos;re live on FreshFinds!
+            🎉 Your storefront is live!
           </h1>
           <p className="text-ink-muted mb-8 max-w-xs leading-relaxed">
-            Your business and first listing are now visible to hungry locals. Welcome to the community! 🌿
+            Your business is now visible on FreshFinds. Add your first product to start attracting customers! 🌿
           </p>
 
           <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-6 w-full space-y-3 mb-6">
             {[
               { icon: Check, label: "Vendor profile created", color: "text-sage-600" },
-              { icon: Package, label: "First listing published", color: "text-sage-600" },
               { icon: MapPin, label: `Visible on the ${(STATES.find(s => s.code === form.state) || STATES[0]).name} map`, color: "text-terra-500" },
               { icon: Leaf, label: 'Appears in "Fresh Right Now" feed', color: "text-sage-600" },
             ].map((item, i) => (
@@ -260,23 +211,20 @@ export default function OnboardingPage() {
           </div>
 
           <div className="w-full space-y-3">
+            <Link
+              href="/post"
+              className="block w-full bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm text-center active:scale-[0.98]"
+            >
+              Add your first product →
+            </Link>
             {createdVendorId && (
               <Link
                 href={`/vendor/${createdVendorId}`}
-                className="block w-full bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm text-center active:scale-[0.98]"
+                className="block w-full bg-card text-sage-600 font-bold py-3.5 rounded-2xl border-2 border-sage-200 hover:border-sage-400 transition-all text-center"
               >
-                View Your Profile →
+                View your profile →
               </Link>
             )}
-            <button
-              onClick={() => {
-                setStep(1); setCompleted(false);
-                setCreatedVendorId(null); setForm(getEmptyForm());
-              }}
-              className="block w-full bg-card text-sage-600 font-bold py-3.5 rounded-2xl border-2 border-sage-200 hover:border-sage-400 transition-all text-center"
-            >
-              Add Another Listing
-            </button>
             <button
               onClick={() => {
                 if (navigator.share) {
@@ -309,7 +257,6 @@ export default function OnboardingPage() {
   const steps = [
     { num: 1, label: "Business Info", icon: Store },
     { num: 2, label: "About You", icon: ClipboardCheck },
-    { num: 3, label: "First Listing", icon: Package },
   ];
 
   /* ── Form ────────────────────────────────────────────────── */
@@ -349,7 +296,7 @@ export default function OnboardingPage() {
                     {label}
                   </span>
                 </div>
-                {num < 3 && (
+                {num < 2 && (
                   <div
                     className={`flex-1 h-1 rounded-full transition-all duration-300 ${
                       step > num ? "bg-sage-400" : "bg-cream-200"
@@ -628,204 +575,20 @@ export default function OnboardingPage() {
                 ← Back
               </button>
               <button
-                onClick={() => setStep(3)}
-                disabled={!step2Valid}
-                className={`flex-1 py-3.5 rounded-2xl font-bold transition-all ${
-                  step2Valid
-                    ? "bg-terra-500 text-white hover:bg-terra-400 shadow-warm active:scale-[0.98]"
-                    : "bg-cream-200 text-ink-muted cursor-not-allowed"
-                }`}
-              >
-                Continue →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ─── STEP 3: First Listing ──────────────────────────── */}
-        {step === 3 && (
-          <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-6 animate-fade-in-up">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-sage-100 flex items-center justify-center">
-                <Package className="w-4 h-4 text-sage-600" />
-              </div>
-              <h2 className="text-lg font-bold font-serif text-ink">Create Your First Listing</h2>
-            </div>
-            <p className="text-sm text-ink-muted -mt-3 mb-4">
-              This is what customers will see in the &ldquo;Fresh Right Now&rdquo; feed.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1.5">
-                  Item Name <span className="text-terra-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.itemName}
-                  onChange={(e) => update({ itemName: e.target.value })}
-                  placeholder="e.g., Classic Country Loaf"
-                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1.5">
-                  Item Type <span className="text-terra-500">*</span>
-                </label>
-                <select
-                  value={form.itemCategory}
-                  onChange={(e) => update({ itemCategory: e.target.value })}
-                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                >
-                  <option value="">Select item type...</option>
-                  {ITEM_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1.5">
-                  Description <span className="text-terra-500">*</span>
-                </label>
-                <textarea
-                  value={form.itemDescription}
-                  onChange={(e) => update({ itemDescription: e.target.value })}
-                  placeholder="Describe your item — what makes it special?"
-                  rows={3}
-                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none resize-none font-sans"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-bold text-ink mb-1.5">
-                    Price ($) <span className="text-terra-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={form.price}
-                    onChange={(e) => update({ price: e.target.value })}
-                    placeholder="8.50"
-                    step="0.01" min="0"
-                    className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-ink mb-1.5">Quantity</label>
-                  <input
-                    type="number"
-                    value={form.quantity}
-                    onChange={(e) => update({ quantity: e.target.value })}
-                    placeholder="e.g., 5"
-                    min="1"
-                    className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                  />
-                </div>
-              </div>
-
-              <ImageUpload
-                value={form.itemPhotoUrl}
-                onChange={(url) => update({ itemPhotoUrl: url })}
-                label="Item Photo"
-                aspectRatio="16/9"
-              />
-
-              <div>
-                <label className="block text-sm font-bold text-ink mb-2">Dietary Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  {DIETARY_OPTIONS.map((tag) => {
-                    const selected = form.dietaryTags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => {
-                          const next = selected
-                            ? form.dietaryTags.filter((t) => t !== tag)
-                            : [...form.dietaryTags, tag];
-                          update({ dietaryTags: next });
-                        }}
-                        className={`px-3.5 py-2 rounded-full text-sm font-bold transition-all ${
-                          selected
-                            ? "bg-honey-500 text-white shadow-warm"
-                            : "bg-cream-100 text-ink-light hover:bg-cream-200"
-                        }`}
-                      >
-                        {selected ? "✓ " : ""}{tag}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-bold text-ink mb-1.5">Pickup Start</label>
-                  <input
-                    type="datetime-local"
-                    value={form.pickupStart}
-                    onChange={(e) => update({ pickupStart: e.target.value })}
-                    className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-ink mb-1.5">Pickup End</label>
-                  <input
-                    type="datetime-local"
-                    value={form.pickupEnd}
-                    onChange={(e) => update({ pickupEnd: e.target.value })}
-                    className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1.5">Ingredients List</label>
-                <textarea
-                  value={form.ingredients}
-                  onChange={(e) => update({ ingredients: e.target.value })}
-                  placeholder="e.g., Organic flour, water, sourdough starter, sea salt"
-                  rows={2}
-                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none resize-none font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1.5">Allergen Warning</label>
-                <input
-                  type="text"
-                  value={form.allergenWarning}
-                  onChange={(e) => update({ allergenWarning: e.target.value })}
-                  placeholder="e.g., Contains wheat, dairy, nuts"
-                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setStep(2)}
-                className="flex-1 bg-cream-100 text-ink-light py-3.5 rounded-2xl font-bold hover:bg-cream-200 transition-colors"
-              >
-                ← Back
-              </button>
-              <button
                 onClick={handleSubmit}
-                disabled={!step3Valid || submitting}
+                disabled={!step2Valid || submitting}
                 className={`flex-1 py-3.5 rounded-2xl font-bold transition-all ${
-                  step3Valid && !submitting
+                  step2Valid && !submitting
                     ? "bg-terra-500 text-white hover:bg-terra-400 shadow-warm active:scale-[0.98]"
                     : "bg-cream-200 text-ink-muted cursor-not-allowed"
                 }`}
               >
                 {submitting ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="animate-spin">⏳</span> Posting...
+                    <span className="animate-spin">⏳</span> Creating...
                   </span>
                 ) : (
-                  "📤 Post Listing"
+                  "🎉 Create Storefront"
                 )}
               </button>
             </div>

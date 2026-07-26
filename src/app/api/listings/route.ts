@@ -6,7 +6,7 @@ const NOW = Date.now();
 
 // ── GET ──────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const POST_TYPE_META: Record<string, { emoji: string; label: string }> = {
+  const postTypeMeta: Record<string, { emoji: string; label: string }> = {
     baked_today: { emoji: "🥖", label: "Baked fresh this morning" },
     harvested_today: { emoji: "🌽", label: "Picked this morning" },
     just_made: { emoji: "🍪", label: "Cooling on the rack right now" },
