@@ -15,6 +15,7 @@ import {
   Loader2,
   ChevronDown,
   Building2,
+  Crosshair,
 } from "lucide-react";
 import { CITIES, getCitiesGroupedByState, type CityDef } from "@/lib/data";
 
@@ -70,6 +71,8 @@ const RADIUS_OPTIONS = [
 
 const CITY_GROUPS = getCitiesGroupedByState();
 
+const LS_CITY_KEY = "ff-selected-city";
+
 /* ── Helpers ──────────────────────────────────────────────────── */
 function haversineKm(a: [number, number], b: [number, number]): number {
   const R = 6371;
@@ -85,6 +88,39 @@ function haversineKm(a: [number, number], b: [number, number]): number {
 
 function haversineMi(a: [number, number], b: [number, number]): number {
   return haversineKm(a, b) * 0.621371;
+}
+
+/** Find the closest city from CITIES to the given coordinates */
+function findNearestCity(lat: number, lng: number): CityDef {
+  let best = CITIES[0];
+  let bestDist = Infinity;
+  for (const city of CITIES) {
+    const d = haversineKm([lat, lng], [city.lat, city.lng]);
+    if (d < bestDist) {
+      bestDist = d;
+      best = city;
+    }
+  }
+  return best;
+}
+
+/** Load city slug from localStorage */
+function loadSavedCity(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(LS_CITY_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Save city slug to localStorage */
+function saveCity(slug: string) {
+  try {
+    localStorage.setItem(LS_CITY_KEY, slug);
+  } catch {
+    // ignore
+  }
 }
 
 /* ── Component ────────────────────────────────────────────────── */
@@ -105,7 +141,6 @@ function BottomSheet({
   const handleTouchStart = (e: React.TouchEvent) => {
     const sheet = sheetRef.current;
     if (!sheet) return;
-    // Only start drag if touching near the handle or at the top of scroll
     if (sheet.scrollTop <= 0) {
       startY.current = e.touches[0].clientY;
       isDragging.current = true;
@@ -133,13 +168,11 @@ function BottomSheet({
     sheet.classList.remove("swiping");
 
     if (delta > 100) {
-      // Dismiss
       sheet.classList.add("dismissing");
       const overlay = sheet.parentElement;
       if (overlay) overlay.classList.add("dismissing");
       setTimeout(onClose, 250);
     } else {
-      // Snap back
       sheet.style.transform = "";
     }
   };
@@ -232,6 +265,65 @@ function BottomSheet({
   );
 }
 
+/* ── City Picker Overlay (fallback when location denied) ─────── */
+function CityPickerOverlay({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (city: CityDef) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] bg-cream-50/95 backdrop-blur flex flex-col safe-top safe-bottom">
+      {/* Header */}
+      <div className="px-5 pt-6 pb-3 text-center flex-shrink-0">
+        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-sage-50 flex items-center justify-center shadow-warm">
+          <MapPin className="w-7 h-7 text-sage-500" strokeWidth={1.5} />
+        </div>
+        <h1 className="text-xl font-bold font-serif text-ink mb-2">
+          📍 Where are you?
+        </h1>
+        <p className="text-sm text-ink-muted max-w-xs mx-auto leading-relaxed">
+          We&apos;ll show you local vendors near your city. Pick your city to start browsing fresh, homemade food.
+        </p>
+      </div>
+
+      {/* City list grouped by state */}
+      <div className="flex-1 overflow-y-auto px-4 pb-6">
+        <div className="max-w-md mx-auto space-y-3">
+          {CITY_GROUPS.map((group) => (
+            <div key={group.state}>
+              <div className="px-3 py-2 text-xs font-bold text-ink-muted uppercase tracking-wider sticky top-0 bg-cream-50/90 backdrop-blur rounded-lg">
+                {group.stateName}
+              </div>
+              <div className="mt-1 space-y-0.5">
+                {group.cities.map((city) => (
+                  <button
+                    key={city.slug}
+                    onClick={() => onSelect(city)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-cream-100 active:bg-cream-200 transition-colors touch-scale"
+                  >
+                    <span className="text-xl">{city.slug === "austin" ? "🌟" : "🗺️"}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-bold text-ink block">
+                        {city.name}, {city.state}
+                      </span>
+                      <span className="text-xs text-ink-muted block truncate">
+                        {city.tagline}
+                      </span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-ink-muted -rotate-90" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── MapPage Component ────────────────────────────────────────── */
 export default function MapPage() {
   const router = useRouter();
@@ -252,8 +344,10 @@ export default function MapPage() {
   const [geocoding, setGeocoding] = useState(false);
 
   // City picker
-  const [selectedCity, setSelectedCity] = useState<CityDef>(CITIES[0]); // default: Austin
+  const [selectedCity, setSelectedCity] = useState<CityDef | null>(null);
   const [showCityPicker, setShowCityPicker] = useState(false);
+  const [showCityOverlay, setShowCityOverlay] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   // Dietary & category filters (enhanced)
   const [showFilters, setShowFilters] = useState(false);
@@ -272,6 +366,7 @@ export default function MapPage() {
   const userMarker = useRef<any>(null);
   const radiusCircle = useRef<any>(null);
   const initDone = useRef(false);
+  const cityInitDone = useRef(false);
 
   /* ── Fetch vendors ──────────────────────────────────────────── */
   const fetchVendors = useCallback(() => {
@@ -324,9 +419,10 @@ export default function MapPage() {
         shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
+      // Default: neutral US center until city is determined
       const map = L.map(mapRef.current!, {
-        center: [30.2672, -97.7431],
-        zoom: 12,
+        center: [37.0, -95.0],
+        zoom: 5,
         zoomControl: false,
       });
 
@@ -344,6 +440,63 @@ export default function MapPage() {
 
     initMap();
   }, []);
+
+  /* ── Auto-detect city on mount ──────────────────────────────── */
+  useEffect(() => {
+    if (cityInitDone.current) return;
+    cityInitDone.current = true;
+
+    // 1. Try localStorage first
+    const savedSlug = loadSavedCity();
+    if (savedSlug) {
+      const found = CITIES.find((c) => c.slug === savedSlug);
+      if (found) {
+        setSelectedCity(found);
+        setZipLocation({ lat: found.lat, lng: found.lng, display: `${found.name}, ${found.state}` });
+        setZipInput(found.zipHint);
+        return; // done — city loaded from storage
+      }
+    }
+
+    // 2. No saved city — try geolocation
+    if (!navigator.geolocation) {
+      setShowCityOverlay(true);
+      return;
+    }
+
+    setDetectingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setUserLoc([lat, lng]);
+
+        // Find nearest city
+        const nearest = findNearestCity(lat, lng);
+        saveCity(nearest.slug);
+        setSelectedCity(nearest);
+        setZipLocation({ lat: nearest.lat, lng: nearest.lng, display: `${nearest.name}, ${nearest.state}` });
+        setZipInput(nearest.zipHint);
+        setDetectingLocation(false);
+      },
+      () => {
+        // Geolocation denied
+        setDetectingLocation(false);
+        setShowCityOverlay(true);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
+    );
+  }, []);
+
+  /* ── Fly map to selected city once both map + city are ready ── */
+  useEffect(() => {
+    if (!mapReady || !selectedCity) return;
+    const map = mapInstance.current;
+    if (!map) return;
+
+    map.flyTo([selectedCity.lat, selectedCity.lng], selectedCity.defaultZoom, { duration: 0.8 });
+  }, [mapReady, selectedCity]);
 
   /* ── Update markers when filtered vendors change ────────────── */
   useEffect(() => {
@@ -424,7 +577,7 @@ export default function MapPage() {
     map.flyTo([zipLocation.lat, zipLocation.lng], 12, { duration: 0.8 });
   }, [zipLocation, radius, mapReady]);
 
-  /* ── Geolocation ────────────────────────────────────────────── */
+  /* ── Geolocation (Find Me button) ────────────────────────────── */
   const handleFindMe = useCallback(() => {
     if (!navigator.geolocation) return;
 
@@ -432,6 +585,13 @@ export default function MapPage() {
       (pos) => {
         const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setUserLoc(loc);
+
+        // Find nearest city and auto-select it
+        const nearest = findNearestCity(loc[0], loc[1]);
+        saveCity(nearest.slug);
+        setSelectedCity(nearest);
+        setZipLocation({ lat: nearest.lat, lng: nearest.lng, display: `${nearest.name}, ${nearest.state}` });
+        setZipInput(nearest.zipHint);
 
         if (userMarker.current) {
           mapInstance.current?.removeLayer(userMarker.current);
@@ -446,13 +606,12 @@ export default function MapPage() {
             iconAnchor: [9, 9],
           });
           userMarker.current = L.marker(loc, { icon: circleIcon }).addTo(mapInstance.current);
-          mapInstance.current.flyTo(loc, 14, { duration: 1 });
+          mapInstance.current.flyTo([nearest.lat, nearest.lng], nearest.defaultZoom, { duration: 1 });
         }
       },
       () => {
-        const defaultLoc: [number, number] = [30.2672, -97.7431];
-        setUserLoc(defaultLoc);
-        mapInstance.current?.flyTo(defaultLoc, 12, { duration: 1 });
+        // If denied, show city picker overlay
+        setShowCityOverlay(true);
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
     );
@@ -471,6 +630,11 @@ export default function MapPage() {
         const loc = { lat: data.result.lat, lng: data.result.lng, display: data.result.displayName };
         setZipLocation(loc);
         setZipInput(cleaned);
+
+        // Find nearest city from the ZIP location
+        const nearest = findNearestCity(loc.lat, loc.lng);
+        saveCity(nearest.slug);
+        setSelectedCity(nearest);
       }
     } catch {}
     setGeocoding(false);
@@ -483,19 +647,27 @@ export default function MapPage() {
   };
 
   const handleCityPreset = useCallback((city: CityDef) => {
+    saveCity(city.slug);
+    setSelectedCity(city);
     const loc = { lat: city.lat, lng: city.lng, display: `${city.name}, ${city.state}` };
     setZipLocation(loc);
     setZipInput(city.zipHint);
-    setSelectedCity(city);
     setShowCityPicker(false);
+    setShowCityOverlay(false);
+    // Fly map to city
+    if (mapInstance.current) {
+      mapInstance.current.flyTo([city.lat, city.lng], city.defaultZoom, { duration: 0.8 });
+    }
   }, []);
 
   const handleCitySelect = useCallback((city: CityDef) => {
+    saveCity(city.slug);
     setSelectedCity(city);
     const loc = { lat: city.lat, lng: city.lng, display: `${city.name}, ${city.state}` };
     setZipLocation(loc);
     setZipInput(city.zipHint);
     setShowCityPicker(false);
+    setShowCityOverlay(false);
     // Fly map to city
     if (mapInstance.current) {
       mapInstance.current.flyTo([city.lat, city.lng], city.defaultZoom, { duration: 0.8 });
@@ -548,6 +720,14 @@ export default function MapPage() {
   /* ── Render ─────────────────────────────────────────────────── */
   return (
     <div className="flex flex-col h-[100dvh] relative">
+      {/* ─── City Picker Overlay (fallback) ──────────────────────── */}
+      {showCityOverlay && !selectedCity && (
+        <CityPickerOverlay
+          onSelect={handleCitySelect}
+          onClose={() => setShowCityOverlay(false)}
+        />
+      )}
+
       {/* ─── Map ────────────────────────────────────────────────── */}
       <div className="absolute inset-0">
         <div ref={mapRef} className="w-full h-full" />
@@ -569,10 +749,28 @@ export default function MapPage() {
                 <span className="text-xl font-bold font-serif text-ink">FreshFinds</span>
               </div>
               <span className="text-xs text-ink-muted bg-cream-50/90 backdrop-blur px-2.5 py-1 rounded-full font-medium border border-cream-200/50 shadow-warm">
-                {zipLocation ? zipLocation.display : `${selectedCity.name}, ${selectedCity.state}`}
+                {zipLocation ? zipLocation.display : selectedCity ? `${selectedCity.name}, ${selectedCity.state}` : "Select your city"}
               </span>
             </div>
           </div>
+
+          {/* Detected city banner */}
+          {selectedCity && userLoc && (
+            <div className="px-3 mb-1">
+              <div className="max-w-md mx-auto bg-sage-50/95 backdrop-blur rounded-2xl border border-sage-200/60 shadow-warm px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-semibold text-sage-700">
+                  <Crosshair className="w-3.5 h-3.5" />
+                  📍 Detected: {selectedCity.name}, {selectedCity.state}
+                </div>
+                <button
+                  onClick={() => setShowCityOverlay(true)}
+                  className="text-xs font-bold text-sage-600 hover:text-sage-500 transition-colors"
+                >
+                  Change
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Global search bar */}
           <div className="px-3 relative">
@@ -679,7 +877,7 @@ export default function MapPage() {
                 className="flex items-center gap-1.5 bg-card/95 backdrop-blur rounded-2xl shadow-warm border border-cream-200/60 px-3 py-2 text-sm font-semibold text-ink hover:bg-cream-50 transition-all"
               >
                 <Building2 className="w-4 h-4 text-sage-500" strokeWidth={2} />
-                {selectedCity.name}, {selectedCity.state}
+                {selectedCity ? `${selectedCity.name}, ${selectedCity.state}` : "Pick a city"}
                 <ChevronDown className={`w-4 h-4 text-ink-muted transition-transform ${showCityPicker ? "rotate-180" : ""}`} />
               </button>
               <div className="flex items-center gap-1.5 overflow-x-auto flex-1">
@@ -688,7 +886,7 @@ export default function MapPage() {
                     key={city.slug}
                     onClick={() => handleCityPreset(city)}
                     className={`flex-shrink-0 px-2.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                      selectedCity.slug === city.slug
+                      selectedCity?.slug === city.slug
                         ? "bg-sage-500 text-white shadow-warm scale-105"
                         : "bg-card/90 text-ink-light border border-cream-200/60 hover:bg-cream-100 shadow-warm"
                     }`}
@@ -712,13 +910,13 @@ export default function MapPage() {
                         key={city.slug}
                         onClick={() => handleCitySelect(city)}
                         className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left hover:bg-cream-50 transition-colors ${
-                          selectedCity.slug === city.slug ? "bg-sage-50 font-bold text-sage-700" : "text-ink font-medium"
+                          selectedCity?.slug === city.slug ? "bg-sage-50 font-bold text-sage-700" : "text-ink font-medium"
                         }`}
                       >
-                        <span className="text-lg">{selectedCity.slug === city.slug ? "📍" : "🗺️"}</span>
+                        <span className="text-lg">{selectedCity?.slug === city.slug ? "📍" : "🗺️"}</span>
                         <span>{city.name}</span>
                         <span className="text-xs text-ink-muted ml-auto">{city.state}</span>
-                        {selectedCity.slug === city.slug && (
+                        {selectedCity?.slug === city.slug && (
                           <span className="text-xs bg-sage-500 text-white px-1.5 py-0.5 rounded-full">Active</span>
                         )}
                       </button>
@@ -871,11 +1069,13 @@ export default function MapPage() {
       <div className="absolute bottom-24 left-3 z-10 pointer-events-none">
         <div className="bg-card/95 backdrop-blur rounded-2xl shadow-warm px-3 py-2 text-xs font-semibold text-ink-muted pointer-events-auto border border-cream-200/40 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-sage-500" />
-          {filteredVendors.length === 0 && !isLoading
-            ? `Be the first vendor in ${selectedCity.name}!`
-            : zipLocation
-              ? `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""} within ${radius} mi`
-              : `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""}`}
+          {!selectedCity
+            ? "Pick a city to start browsing!"
+            : filteredVendors.length === 0 && !isLoading
+              ? `Be the first vendor in ${selectedCity.name}!`
+              : zipLocation
+                ? `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""} within ${radius} mi`
+                : `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""}`}
         </div>
       </div>
 
@@ -891,8 +1091,20 @@ export default function MapPage() {
         </div>
       )}
 
+      {/* ─── Detecting location indicator ────────────────────────── */}
+      {detectingLocation && !showCityOverlay && (
+        <div className="absolute inset-0 z-20 bg-cream-50/60 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-cream-100 flex items-center justify-center">
+              <Crosshair className="w-8 h-8 text-sage-400 animate-pulse" strokeWidth={1.5} />
+            </div>
+            <p className="text-ink-muted text-sm font-medium">Detecting your location...</p>
+          </div>
+        </div>
+      )}
+
       {/* ─── Empty state overlay (no vendors, map loaded) ────────── */}
-      {!isLoading && mapReady && filteredVendors.length === 0 && (
+      {!isLoading && mapReady && selectedCity && filteredVendors.length === 0 && (
         <div className="absolute bottom-24 left-0 right-0 z-10 px-4">
           <div className="max-w-md mx-auto bg-card/95 backdrop-blur rounded-3xl shadow-warm-lg border border-cream-200/60 p-6 text-center animate-fade-in-up">
             <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-sage-50 flex items-center justify-center shadow-warm">
