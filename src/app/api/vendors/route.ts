@@ -1,77 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { haversineMi } from "@/lib/haversine";
-import { getStore } from "@/lib/store";
-import { MOCK_VENDORS, MOCK_REVIEWS, getCityBySlug, getCityByName } from "@/lib/data";
-
-// ── In-memory store types ──────────────────────────────────────────
-interface VendorRecord {
-  id: number;
-  name: string;
-  businessName: string;
-  email: string;
-  phone?: string;
-  address: string;
-  lat: number;
-  lng: number;
-  bio?: string;
-  photoUrl?: string;
-  verified: boolean;
-  categoryName: string;
-  categorySlug: string;
-  categoryIcon: string;
-  website?: string;
-  socialLinks?: string;
-  state?: string;
-  city?: string;
-  createdAt: string;
-}
-
-// ── Helper: build full vendor profile ────────────────────────────
-function getVendorProfile(vendorId: string) {
-  const mockVendor = MOCK_VENDORS.find((v) => v.id === parseInt(vendorId));
-  const mockReviews = MOCK_REVIEWS[vendorId] || [];
-
-  const store = getStore();
-  const dynVendor = store.vendors.find((v) => v.id === parseInt(vendorId));
-  const dynListings = store.listings.filter((l) => l.vendorId === parseInt(vendorId));
-  const dynReviews = store.reviews.filter((r) => r.vendorId === parseInt(vendorId));
-
-  if (!mockVendor && !dynVendor) return null;
-
-  if (dynVendor) {
-    return {
-      vendor: {
-        ...dynVendor,
-        rating: dynReviews.length > 0
-          ? dynReviews.reduce((s: number, r: any) => s + r.rating, 0) / dynReviews.length
-          : 5.0,
-        reviewCount: dynReviews.length,
-        listingCount: dynListings.length,
-        hasFreshItems: dynListings.some((l: any) => {
-          const start = new Date(l.pickupWindowStart).getTime();
-          return start <= Date.now() + 86400000;
-        }),
-      },
-      listings: dynListings.map((l: any) => ({
-        ...l,
-        isFresh: new Date(l.pickupWindowStart).getTime() <= Date.now() + 86400000,
-        createdAt: l.createdAt,
-      })),
-      reviews: dynReviews,
-    };
-  }
-
-  return {
-    vendor: {
-      ...mockVendor,
-      email: "",
-      phone: "",
-      createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
-    },
-    listings: [],
-    reviews: mockReviews,
-  };
-}
+import { getRawDb } from "@/db";
+import { expireAfter } from "@/lib/data";
 
 // ── GET ──────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
@@ -83,49 +13,123 @@ export async function GET(request: NextRequest) {
   const city = searchParams.get("city");
   const state = searchParams.get("state");
 
+  const db = getRawDb();
+
   // Single vendor lookup
   if (vendorId) {
-    const data = getVendorProfile(vendorId);
-    if (!data) {
+    const vendor = db.prepare("SELECT * FROM vendors WHERE id = ?").get(parseInt(vendorId)) as any;
+    if (!vendor) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }
-    return NextResponse.json(data);
+
+    const vendorListings = db.prepare(
+      "SELECT * FROM listings WHERE vendor_id = ? AND is_active = 1"
+    ).all(parseInt(vendorId)) as any[];
+
+    const vendorReviews = db.prepare(
+      "SELECT * FROM reviews WHERE vendor_id = ?"
+    ).all(parseInt(vendorId)) as any[];
+
+    const avgRating = vendorReviews.length > 0
+      ? vendorReviews.reduce((s, r) => s + r.rating, 0) / vendorReviews.length
+      : 5.0;
+
+    return NextResponse.json({
+      vendor: {
+        id: vendor.id,
+        name: vendor.name,
+        businessName: vendor.business_name,
+        email: vendor.email,
+        phone: vendor.phone,
+        address: vendor.address,
+        lat: vendor.lat,
+        lng: vendor.lng,
+        bio: vendor.bio,
+        photoUrl: vendor.photo_url,
+        verified: !!vendor.verified,
+        categoryName: vendor.category_name,
+        categorySlug: vendor.category_slug,
+        categoryIcon: vendor.category_icon,
+        website: vendor.website,
+        socialLinks: vendor.social_links,
+        state: vendor.state,
+        city: vendor.city,
+        rating: Math.round(avgRating * 10) / 10,
+        reviewCount: vendorReviews.length,
+        listingCount: vendorListings.length,
+        hasFreshItems: vendorListings.some((l: any) => {
+          const start = new Date(l.pickup_window_start).getTime();
+          return start <= Date.now() + 86400000;
+        }),
+        createdAt: vendor.created_at,
+      },
+      listings: vendorListings.map((l: any) => ({
+        id: l.id,
+        title: l.title,
+        description: l.description,
+        price: l.price,
+        quantity: l.quantity,
+        photoUrl: l.photo_url,
+        dietaryTags: l.dietary_tags || "[]",
+        vendorName: l.vendor_name,
+        vendorId: l.vendor_id,
+        categoryIcon: l.category_icon,
+        categorySlug: l.category_slug,
+        postType: l.post_type,
+        postedAt: l.posted_at,
+        expiresAt: l.expires_at,
+        pickupWindowStart: l.pickup_window_start,
+        pickupWindowEnd: l.pickup_window_end,
+        ingredients: l.ingredients,
+        allergenWarning: l.allergen_warning,
+        isFresh: new Date(l.pickup_window_start).getTime() <= Date.now() + 86400000,
+        createdAt: l.created_at,
+      })),
+      reviews: vendorReviews.map((r: any) => ({
+        id: r.id,
+        userId: r.user_id,
+        userName: r.user_name,
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.created_at,
+      })),
+    });
   }
 
   // List all vendors for map
-  const store = getStore();
-  const dynVendors = store.vendors.map((v: any) => ({
-    id: v.id,
-    businessName: v.businessName,
-    lat: v.lat,
-    lng: v.lng,
-    address: v.address,
-    photoUrl: v.photoUrl || null,
-    categoryName: v.categoryName,
-    categorySlug: v.categorySlug,
-    categoryIcon: v.categoryIcon,
-    rating: 5.0,
-    reviewCount: 0,
-    listingCount: store.listings.filter((l: any) => l.vendorId === v.id).length,
-    hasFreshItems: store.listings
-      .filter((l: any) => l.vendorId === v.id)
-      .some((l: any) => new Date(l.pickupWindowStart).getTime() <= Date.now() + 86400000),
-    bio: v.bio || null,
-    state: v.state || "",
-    city: v.city || "",
-  }));
+  const vendors = db.prepare("SELECT * FROM vendors").all() as any[];
+  const allListings = db.prepare("SELECT * FROM listings WHERE is_active = 1").all() as any[];
 
-  let allVendors: any[] = [...MOCK_VENDORS, ...dynVendors];
+  let allVendors = vendors.map((v: any) => {
+    const vListings = allListings.filter((l: any) => l.vendor_id === v.id);
+    return {
+      id: v.id,
+      businessName: v.business_name,
+      lat: v.lat,
+      lng: v.lng,
+      address: v.address,
+      photoUrl: v.photo_url || null,
+      categoryName: v.category_name,
+      categorySlug: v.category_slug,
+      categoryIcon: v.category_icon,
+      rating: 5.0,
+      reviewCount: 0,
+      listingCount: vListings.length,
+      hasFreshItems: vListings.some((l: any) =>
+        new Date(l.pickup_window_start).getTime() <= Date.now() + 86400000
+      ),
+      bio: v.bio || null,
+      state: v.state || "",
+      city: v.city || "",
+    };
+  });
 
   // City filtering
   if (city) {
     const cityLower = city.toLowerCase();
-    const cityDef = getCityBySlug(cityLower) || getCityByName(cityLower);
-    if (cityDef) {
-      allVendors = allVendors.filter((v) =>
-        v.city?.toLowerCase() === cityDef.name.toLowerCase()
-      );
-    }
+    allVendors = allVendors.filter((v) =>
+      v.city?.toLowerCase() === cityLower
+    );
   }
 
   // State filtering
@@ -155,13 +159,35 @@ export async function GET(request: NextRequest) {
 // ── POST ─────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const store = getStore();
+  const db = getRawDb();
 
-  const id = store.nextVendorId++;
   const now = new Date().toISOString();
 
-  const vendor: VendorRecord = {
-    id,
+  const result = db.prepare(
+    `INSERT INTO vendors (name, business_name, email, phone, address, lat, lng, bio, photo_url, verified, category_name, category_slug, category_icon, website, social_links, state, city, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    body.name || "",
+    body.businessName || "",
+    body.email || "",
+    body.phone || "",
+    body.address || "",
+    body.lat || 30.2672,
+    body.lng || -97.7431,
+    body.bio || "",
+    body.photoUrl || "",
+    body.categoryName || "Other",
+    body.categorySlug || "other",
+    body.categoryIcon || "📦",
+    body.website || "",
+    body.socialLinks || "",
+    body.state || "TX",
+    body.city || "Austin",
+    now
+  );
+
+  const vendor = {
+    id: Number(result.lastInsertRowid),
     name: body.name || "",
     businessName: body.businessName || "",
     email: body.email || "",
@@ -181,8 +207,6 @@ export async function POST(request: NextRequest) {
     city: body.city || "Austin",
     createdAt: now,
   };
-
-  store.vendors.push(vendor);
 
   return NextResponse.json({ vendor }, { status: 201 });
 }
