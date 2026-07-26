@@ -2,7 +2,18 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { Search, Navigation, MapPin, Star, Clock, Leaf, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  Navigation,
+  MapPin,
+  Star,
+  Clock,
+  Leaf,
+  X,
+  SlidersHorizontal,
+  Loader2,
+} from "lucide-react";
 
 /* ── Types ────────────────────────────────────────────────────── */
 interface Vendor {
@@ -36,6 +47,35 @@ const CATEGORIES = [
   { slug: "food-truck",      icon: "🚚", label: "Trucks" },
 ];
 
+const DIETARY_FILTERS = [
+  { slug: "vegan", label: "Vegan", emoji: "🌱" },
+  { slug: "vegetarian", label: "Vegetarian", emoji: "🥬" },
+  { slug: "gluten-free", label: "Gluten-Free", emoji: "🌾" },
+  { slug: "dairy-free", label: "Dairy-Free", emoji: "🥛" },
+  { slug: "nut-free", label: "Nut-Free", emoji: "🥜" },
+  { slug: "keto", label: "Keto", emoji: "🥑" },
+  { slug: "organic", label: "Organic", emoji: "🍃" },
+  { slug: "sugar-free", label: "Sugar-Free", emoji: "🍬" },
+];
+
+const RADIUS_OPTIONS = [
+  { value: 5, label: "5 mi" },
+  { value: 10, label: "10 mi" },
+  { value: 25, label: "25 mi" },
+  { value: 50, label: "50 mi" },
+];
+
+const CITY_PRESETS = [
+  { label: "Austin", zip: "78701", lat: 30.2672, lng: -97.7431 },
+  { label: "Nashville", zip: "37203", lat: 36.1525, lng: -86.7887 },
+  { label: "Charlotte", zip: "28202", lat: 35.2271, lng: -80.8431 },
+  { label: "Charleston", zip: "29401", lat: 32.7765, lng: -79.9311 },
+  { label: "Richmond", zip: "23219", lat: 37.5407, lng: -77.4360 },
+  { label: "Knoxville", zip: "37902", lat: 35.9606, lng: -83.9207 },
+  { label: "Raleigh", zip: "27601", lat: 35.7796, lng: -78.6382 },
+  { label: "Greenville", zip: "29601", lat: 34.8526, lng: -82.3940 },
+];
+
 /* ── Helpers ──────────────────────────────────────────────────── */
 function haversineKm(a: [number, number], b: [number, number]): number {
   const R = 6371;
@@ -49,8 +89,13 @@ function haversineKm(a: [number, number], b: [number, number]): number {
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
+function haversineMi(a: [number, number], b: [number, number]): number {
+  return haversineKm(a, b) * 0.621371;
+}
+
 /* ── Component ────────────────────────────────────────────────── */
 export default function MapPage() {
+  const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [filteredVendors, setFilteredVendors] = useState<Vendor[]>([]);
@@ -60,15 +105,38 @@ export default function MapPage() {
   const [userLoc, setUserLoc] = useState<[number, number] | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // ZIP search
+  const [zipInput, setZipInput] = useState("");
+  const [zipLocation, setZipLocation] = useState<{ lat: number; lng: number; display: string } | null>(null);
+  const [radius, setRadius] = useState(10);
+  const [geocoding, setGeocoding] = useState(false);
+
+  // Dietary & category filters (enhanced)
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeDietary, setActiveDietary] = useState<string[]>([]);
+  const [activeAvailability, setActiveAvailability] = useState<string | null>(null);
+
+  // Global search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchTimeout = useRef<any>(null);
+
   const mapInstance = useRef<any>(null);
   const leafletRef = useRef<any>(null);
   const markerGroup = useRef<any>(null);
   const userMarker = useRef<any>(null);
+  const radiusCircle = useRef<any>(null);
   const initDone = useRef(false);
 
   /* ── Fetch vendors ──────────────────────────────────────────── */
-  useEffect(() => {
-    fetch("/api/vendors")
+  const fetchVendors = useCallback(() => {
+    let url = "/api/vendors";
+    if (zipLocation) {
+      url += `?lat=${zipLocation.lat}&lng=${zipLocation.lng}&radius=${radius}`;
+    }
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         const v: Vendor[] = data.vendors || [];
@@ -77,9 +145,13 @@ export default function MapPage() {
         setIsLoading(false);
       })
       .catch(() => setIsLoading(false));
-  }, []);
+  }, [zipLocation, radius]);
 
-  /* ── Apply filters ──────────────────────────────────────────── */
+  useEffect(() => {
+    fetchVendors();
+  }, [fetchVendors]);
+
+  /* ── Apply category/dietary filters ──────────────────────────── */
   useEffect(() => {
     let result = [...vendors];
     if (activeCategory !== "all") {
@@ -170,6 +242,9 @@ export default function MapPage() {
         if (userLoc) {
           const dist = haversineKm(userLoc, [vendor.lat, vendor.lng]);
           setSelectedVendor({ ...vendor, distance: dist });
+        } else if (zipLocation) {
+          const dist = haversineMi([zipLocation.lat, zipLocation.lng], [vendor.lat, vendor.lng]);
+          setSelectedVendor({ ...vendor, distance: dist });
         } else {
           setSelectedVendor({ ...vendor, distance: undefined });
         }
@@ -179,7 +254,32 @@ export default function MapPage() {
     });
 
     map.addLayer(mcg);
-  }, [filteredVendors, mapReady, userLoc]);
+  }, [filteredVendors, mapReady, userLoc, zipLocation]);
+
+  /* ── Update radius circle ───────────────────────────────────── */
+  useEffect(() => {
+    if (!mapReady || !zipLocation) return;
+    const L = leafletRef.current;
+    const map = mapInstance.current;
+    if (!L || !map) return;
+
+    if (radiusCircle.current) {
+      map.removeLayer(radiusCircle.current);
+    }
+
+    const miToMeters = radius * 1609.34;
+    radiusCircle.current = L.circle([zipLocation.lat, zipLocation.lng], {
+      radius: miToMeters,
+      color: "#7C9082",
+      weight: 2,
+      opacity: 0.3,
+      fillColor: "#7C9082",
+      fillOpacity: 0.08,
+      dashArray: "8 4",
+    }).addTo(map);
+
+    map.flyTo([zipLocation.lat, zipLocation.lng], 12, { duration: 0.8 });
+  }, [zipLocation, radius, mapReady]);
 
   /* ── Geolocation ────────────────────────────────────────────── */
   const handleFindMe = useCallback(() => {
@@ -215,6 +315,77 @@ export default function MapPage() {
     );
   }, []);
 
+  /* ── ZIP Code search ────────────────────────────────────────── */
+  const handleZipSearch = useCallback(async (zip: string) => {
+    const cleaned = zip.trim().slice(0, 5);
+    if (cleaned.length < 5) return;
+
+    setGeocoding(true);
+    try {
+      const res = await fetch(`/api/geocode?zip=${cleaned}`);
+      const data = await res.json();
+      if (data.result) {
+        const loc = { lat: data.result.lat, lng: data.result.lng, display: data.result.displayName };
+        setZipLocation(loc);
+        setZipInput(cleaned);
+      }
+    } catch {}
+    setGeocoding(false);
+  }, []);
+
+  const handleZipKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleZipSearch(zipInput);
+    }
+  };
+
+  const handleCityPreset = useCallback((preset: typeof CITY_PRESETS[0]) => {
+    const loc = { lat: preset.lat, lng: preset.lng, display: `${preset.label}, TX` };
+    setZipLocation(loc);
+    setZipInput(preset.zip);
+  }, []);
+
+  /* ── Global search with autocomplete ────────────────────────── */
+  const handleSearchInput = (val: string) => {
+    setSearchQuery(val);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    if (val.length < 2) {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    searchTimeout.current = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(val)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const suggestions = [
+            ...(data.vendors || []).slice(0, 3).map((v: any) => ({ type: "vendor", ...v })),
+            ...(data.listings || []).slice(0, 3).map((l: any) => ({ type: "listing", ...l })),
+          ];
+          setSearchSuggestions(suggestions);
+          setShowSuggestions(suggestions.length > 0);
+        })
+        .catch(() => {});
+    }, 250);
+  };
+
+  const handleSearchSubmit = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSuggestions(false);
+    }
+  };
+
+  const toggleDietary = (slug: string) => {
+    setActiveDietary((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  };
+
+  const activeFilterCount = activeDietary.length + (activeAvailability ? 1 : 0) + (availableOnly ? 1 : 0);
+
   const showSkeleton = isLoading && !mapReady;
 
   /* ── Render ─────────────────────────────────────────────────── */
@@ -226,7 +397,7 @@ export default function MapPage() {
       </div>
 
       {/* ─── Warm top gradient overlay ──────────────────────────── */}
-      <div className="absolute top-0 left-0 right-0 h-48 z-[5] pointer-events-none bg-gradient-to-b from-cream-50/90 via-cream-50/40 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-56 z-[5] pointer-events-none bg-gradient-to-b from-cream-50/95 via-cream-50/40 to-transparent" />
 
       {/* ─── Top overlay: Header + Search + Filters ─────────────── */}
       <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
@@ -241,23 +412,211 @@ export default function MapPage() {
                 <span className="text-xl font-bold font-serif text-ink">FreshFinds</span>
               </div>
               <span className="text-xs text-ink-muted bg-cream-50/90 backdrop-blur px-2.5 py-1 rounded-full font-medium border border-cream-200/50 shadow-warm">
-                Austin, TX
+                {zipLocation ? zipLocation.display : "Austin, TX"}
               </span>
             </div>
           </div>
 
-          {/* Search bar */}
-          <div className="px-3">
+          {/* Global search bar */}
+          <div className="px-3 relative">
             <div className="bg-card/95 backdrop-blur rounded-2xl shadow-warm border border-cream-200/60 flex items-center gap-2 px-3 py-2.5 max-w-md mx-auto">
               <Search className="w-4 h-4 text-ink-muted" strokeWidth={2} />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onKeyDown={handleSearchSubmit}
+                onFocus={() => searchSuggestions.length > 0 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 placeholder="Find sourdough, honey, fresh eggs..."
                 className="flex-1 bg-transparent text-sm text-ink placeholder-ink-muted/60 outline-none font-sans"
-                readOnly
               />
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}>
+                  <X className="w-4 h-4 text-ink-muted" />
+                </button>
+              )}
+            </div>
+
+            {/* Autocomplete dropdown */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute left-3 right-3 top-full mt-1 max-w-md mx-auto bg-card rounded-2xl shadow-warm-lg border border-cream-200/60 overflow-hidden z-30">
+                {searchSuggestions.map((s, i) => (
+                  <Link
+                    key={`${s.type}-${s.id}-${i}`}
+                    href={s.type === "vendor" ? `/vendor/${s.id}` : `/vendor/${s.vendorId}`}
+                    className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-cream-50 transition-colors text-sm"
+                    onClick={() => setShowSuggestions(false)}
+                  >
+                    <span className="text-lg flex-shrink-0">{s.categoryIcon || "📦"}</span>
+                    <span className="flex-1 truncate font-medium text-ink">
+                      {s.type === "vendor" ? s.businessName : s.title}
+                    </span>
+                    <span className="text-xs text-ink-muted flex-shrink-0">
+                      {s.type === "vendor" ? "Vendor" : s.vendorName}
+                    </span>
+                  </Link>
+                ))}
+                <Link
+                  href={`/search?q=${encodeURIComponent(searchQuery)}`}
+                  className="block text-center px-4 py-2.5 bg-cream-50 text-sm font-bold text-sage-600 hover:bg-cream-100 transition-colors"
+                  onClick={() => setShowSuggestions(false)}
+                >
+                  See all results for "{searchQuery}" →
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* ZIP Code search row */}
+          <div className="px-3 mt-2">
+            <div className="flex items-center gap-2 max-w-md mx-auto">
+              <div className="flex-1 bg-card/95 backdrop-blur rounded-2xl shadow-warm border border-cream-200/60 flex items-center gap-2 px-3 py-2">
+                <MapPin className="w-4 h-4 text-terra-500 flex-shrink-0" strokeWidth={2} />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={zipInput}
+                  onChange={(e) => setZipInput(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                  onKeyDown={handleZipKeyDown}
+                  placeholder="Enter ZIP code..."
+                  className="flex-1 bg-transparent text-sm text-ink placeholder-ink-muted/60 outline-none font-sans"
+                  maxLength={5}
+                />
+                {geocoding ? (
+                  <Loader2 className="w-4 h-4 text-sage-500 animate-spin flex-shrink-0" />
+                ) : (
+                  <button
+                    onClick={() => handleZipSearch(zipInput)}
+                    className="flex-shrink-0 bg-sage-500 text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-sage-400 transition-colors"
+                  >
+                    Go
+                  </button>
+                )}
+              </div>
+
+              {/* Filter toggle button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`relative flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-all shadow-warm ${
+                  showFilters || activeFilterCount > 0
+                    ? "bg-sage-500 text-white"
+                    : "bg-card/95 text-ink-muted border border-cream-200/60"
+                }`}
+              >
+                <SlidersHorizontal className="w-5 h-5" strokeWidth={2} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-terra-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
+
+          {/* City preset buttons */}
+          <div className="category-scroll overflow-x-auto px-3 pt-2 pb-1">
+            <div className="flex gap-2 max-w-md mx-auto">
+              {CITY_PRESETS.map((city) => (
+                <button
+                  key={city.zip}
+                  onClick={() => handleCityPreset(city)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                    zipInput === city.zip
+                      ? "bg-sage-500 text-white shadow-warm scale-105"
+                      : "bg-card/90 text-ink-light border border-cream-200/60 hover:bg-cream-100 shadow-warm"
+                  }`}
+                >
+                  📍 {city.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Radius selector — shown when ZIP is active */}
+          {zipLocation && (
+            <div className="px-3 pt-1 pb-1">
+              <div className="flex items-center gap-2 max-w-md mx-auto bg-card/90 backdrop-blur rounded-full shadow-warm border border-cream-200/60 px-2 py-1.5">
+                <span className="text-xs font-semibold text-ink-muted ml-2">Radius:</span>
+                {RADIUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setRadius(opt.value)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                      radius === opt.value
+                        ? "bg-sage-500 text-white shadow-warm"
+                        : "text-ink-muted hover:bg-cream-100"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced filter panel */}
+          {showFilters && (
+            <div className="px-3 pt-1">
+              <div className="bg-card/95 backdrop-blur rounded-2xl shadow-warm border border-cream-200/60 p-4 max-w-md mx-auto space-y-3 animate-fade-in-up">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-ink font-serif">Filters</span>
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={() => { setActiveDietary([]); setActiveAvailability(null); setAvailableOnly(false); }}
+                      className="text-xs font-bold text-terra-500 hover:text-terra-400"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+
+                {/* Dietary filters */}
+                <div>
+                  <p className="text-xs font-semibold text-ink-muted mb-2">Dietary</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DIETARY_FILTERS.map((d) => (
+                      <button
+                        key={d.slug}
+                        onClick={() => toggleDietary(d.slug)}
+                        className={`px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                          activeDietary.includes(d.slug)
+                            ? "bg-sage-500 text-white shadow-warm"
+                            : "bg-cream-50 text-ink-light border border-cream-200/60 hover:bg-cream-100"
+                        }`}
+                      >
+                        {d.emoji} {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Availability filters */}
+                <div>
+                  <p className="text-xs font-semibold text-ink-muted mb-2">Availability</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { slug: "now", label: "Available Now" },
+                      { slug: "today", label: "Today" },
+                      { slug: "week", label: "This Week" },
+                    ].map((a) => (
+                      <button
+                        key={a.slug}
+                        onClick={() => setActiveAvailability(activeAvailability === a.slug ? null : a.slug)}
+                        className={`px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                          activeAvailability === a.slug
+                            ? "bg-honey-500 text-white shadow-warm"
+                            : "bg-cream-50 text-ink-light border border-cream-200/60 hover:bg-cream-100"
+                        }`}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Category chips */}
           <div className="category-scroll overflow-x-auto px-3 pt-2 pb-2">
@@ -316,7 +675,9 @@ export default function MapPage() {
       <div className="absolute bottom-24 left-3 z-10 pointer-events-none">
         <div className="bg-card/95 backdrop-blur rounded-2xl shadow-warm px-3 py-2 text-xs font-semibold text-ink-muted pointer-events-auto border border-cream-200/40 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-sage-500" />
-          {filteredVendors.length} vendor{filteredVendors.length !== 1 ? "s" : ""}
+          {zipLocation
+            ? `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""} within ${radius} mi`
+            : `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""}`}
         </div>
       </div>
 

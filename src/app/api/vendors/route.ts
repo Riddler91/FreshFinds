@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { haversineMi } from "@/lib/haversine";
 
 // ── In-memory store for dynamically created vendors/listings ──────────
 interface VendorRecord {
@@ -29,7 +30,7 @@ interface ListingRecord {
   price?: number;
   quantity?: number;
   photoUrl?: string;
-  dietaryTags?: string; // JSON array
+  dietaryTags?: string;
   pickupWindowStart: string;
   pickupWindowEnd: string;
   ingredients?: string;
@@ -53,9 +54,11 @@ declare global {
     vendors: VendorRecord[];
     listings: ListingRecord[];
     reviews: ReviewRecord[];
+    messages: any[];
     nextVendorId: number;
     nextListingId: number;
     nextReviewId: number;
+    nextMessageId: number;
   } | undefined;
 }
 
@@ -65,10 +68,15 @@ function getStore() {
       vendors: [],
       listings: [],
       reviews: [],
+      messages: [],
       nextVendorId: 100,
       nextListingId: 200,
       nextReviewId: 300,
+      nextMessageId: 1,
     };
+  } else if (!globalThis.__freshfinds_store.messages) {
+    globalThis.__freshfinds_store.messages = [];
+    globalThis.__freshfinds_store.nextMessageId = 1;
   }
   return globalThis.__freshfinds_store;
 }
@@ -156,7 +164,6 @@ function getVendorProfile(vendorId: string) {
   const mockListings = MOCK_LISTINGS[vendorId] || [];
   const mockReviews = MOCK_REVIEWS[vendorId] || [];
 
-  // Also check in-memory store
   const store = getStore();
   const dynVendor = store.vendors.find((v) => v.id === parseInt(vendorId));
   const dynListings = store.listings.filter((l) => l.vendorId === parseInt(vendorId));
@@ -206,7 +213,11 @@ function getVendorProfile(vendorId: string) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const vendorId = searchParams.get("id");
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
+  const radius = searchParams.get("radius");
 
+  // Single vendor lookup
   if (vendorId) {
     const data = getVendorProfile(vendorId);
     if (!data) {
@@ -236,7 +247,23 @@ export async function GET(request: NextRequest) {
     bio: v.bio || null,
   }));
 
-  return NextResponse.json({ vendors: [...MOCK_VENDORS, ...dynVendors] });
+  let allVendors: any[] = [...MOCK_VENDORS, ...dynVendors];
+
+  // Distance filtering
+  if (lat && lng && radius) {
+    const center: [number, number] = [parseFloat(lat), parseFloat(lng)];
+    const radiusMi = parseFloat(radius);
+
+    allVendors = allVendors
+      .map((v) => {
+        const distance = haversineMi(center, [v.lat, v.lng]);
+        return { ...v, distance: Math.round(distance * 10) / 10 };
+      })
+      .filter((v) => v.distance <= radiusMi)
+      .sort((a, b) => a.distance - b.distance);
+  }
+
+  return NextResponse.json({ vendors: allVendors });
 }
 
 // ── POST ────────────────────────────────────────────────────────────────

@@ -696,12 +696,12 @@ export default function VendorProfilePage() {
           </h2>
 
           <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-5 space-y-3">
-            <button
+            <Link
+              href={`/messages/${vendor.id}`}
               className="w-full bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm flex items-center justify-center gap-2 active:scale-[0.98]"
-              onClick={() => alert("📬 Messaging coming soon! You'll be able to message vendors directly.")}
             >
               <MessageCircle className="w-5 h-5" /> Message Vendor
-            </button>
+            </Link>
 
             {vendor.phone && (
               <a

@@ -15,6 +15,20 @@ function expireAfter(postedAtIso: string): string {
   return new Date(new Date(postedAtIso).getTime() + EXPIRY_HOURS * 3600000).toISOString();
 }
 
+// ── Category slug mapping ─────────────────────────────────────────────
+const VENDOR_CATEGORY_MAP: Record<number, string> = {
+  1: "bread-pastries",
+  2: "eggs-dairy",
+  3: "honey-preserves",
+  4: "desserts",
+  5: "produce",
+  6: "flowers",
+  7: "food-truck",
+  8: "meals",
+  9: "desserts",
+  10: "produce",
+};
+
 // ── Shared mock data ─────────────────────────────────────────────────
 const MOCK_LISTINGS = [
   {
@@ -24,6 +38,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400",
     dietaryTags: '["vegetarian","vegan"]',
     vendorName: "ATX Sourdough", vendorId: 1, categoryIcon: "🥖",
+    categorySlug: "bread-pastries",
     postType: "baked_today",
     postedAt: minsAgo(25),
     pickupWindowStart: pickupToday(7),
@@ -36,6 +51,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=400",
     dietaryTags: '["vegetarian"]',
     vendorName: "ATX Sourdough", vendorId: 1, categoryIcon: "🥖",
+    categorySlug: "bread-pastries",
     postType: "baked_today",
     postedAt: hoursAgo(1.5),
     pickupWindowStart: pickupToday(7),
@@ -48,6 +64,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1549931319-a545799f7b09?w=400",
     dietaryTags: '["vegetarian"]',
     vendorName: "ATX Sourdough", vendorId: 1, categoryIcon: "🥖",
+    categorySlug: "bread-pastries",
     postType: "limited_batch",
     postedAt: hoursAgo(3),
     pickupWindowStart: pickupToday(7),
@@ -60,6 +77,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400",
     dietaryTags: '["vegetarian","gluten-free"]',
     vendorName: "Eastside Eggs", vendorId: 2, categoryIcon: "🥚",
+    categorySlug: "eggs-dairy",
     postType: "available_now",
     postedAt: minsAgo(15),
     pickupWindowStart: pickupToday(8),
@@ -72,6 +90,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1598965675045-8e1e099edc5c?w=400",
     dietaryTags: '["vegetarian","gluten-free"]',
     vendorName: "Eastside Eggs", vendorId: 2, categoryIcon: "🥚",
+    categorySlug: "eggs-dairy",
     postType: "available_now",
     postedAt: hoursAgo(2),
     pickupWindowStart: pickupToday(8),
@@ -84,6 +103,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400",
     dietaryTags: '["gluten-free"]',
     vendorName: "Hill Country Honey", vendorId: 3, categoryIcon: "🍯",
+    categorySlug: "honey-preserves",
     postType: "available_now",
     postedAt: hoursAgo(5),
     pickupWindowStart: pickupToday(9),
@@ -96,6 +116,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=400",
     dietaryTags: '["gluten-free"]',
     vendorName: "Hill Country Honey", vendorId: 3, categoryIcon: "🍯",
+    categorySlug: "honey-preserves",
     postType: "available_now",
     postedAt: hoursAgo(8),
     pickupWindowStart: pickupToday(9),
@@ -108,8 +129,9 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1471943311424-646960669fbc?w=400",
     dietaryTags: '["gluten-free"]',
     vendorName: "Hill Country Honey", vendorId: 3, categoryIcon: "🍯",
+    categorySlug: "honey-preserves",
     postType: "available_now",
-    postedAt: hoursAgo(28), // EXPIRED — > 24h
+    postedAt: hoursAgo(28),
     pickupWindowStart: pickupToday(9),
     pickupWindowEnd: pickupToday(17),
   },
@@ -120,6 +142,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1535920527002-b35e96722eb9?w=400",
     dietaryTags: '["vegetarian"]',
     vendorName: "Texas Pie Company", vendorId: 4, categoryIcon: "🧁",
+    categorySlug: "desserts",
     postType: "just_made",
     postedAt: minsAgo(45),
     pickupWindowStart: pickupToday(10),
@@ -132,6 +155,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1568571780765-9276ac2c48c9?w=400",
     dietaryTags: '["vegetarian"]',
     vendorName: "Texas Pie Company", vendorId: 4, categoryIcon: "🧁",
+    categorySlug: "desserts",
     postType: "just_made",
     postedAt: hoursAgo(6),
     pickupWindowStart: pickupToday(10),
@@ -142,8 +166,9 @@ const MOCK_LISTINGS = [
     description: "A curated box of seasonal organic vegetables — tomatoes, zucchini, basil, bell peppers, and salad greens.",
     price: 25.0, quantity: 8,
     photoUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400",
-    dietaryTags: '["vegan","gluten-free"]',
+    dietaryTags: '["vegan","gluten-free","organic"]',
     vendorName: "Sunset Farms Produce", vendorId: 5, categoryIcon: "🥬",
+    categorySlug: "produce",
     postType: "harvested_today",
     postedAt: minsAgo(10),
     pickupWindowStart: pickupToday(8),
@@ -154,8 +179,9 @@ const MOCK_LISTINGS = [
     description: "5 lbs of mixed heirloom tomatoes — Cherokee Purple, Brandywine, Sun Gold cherries.",
     price: 15.0, quantity: 5,
     photoUrl: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400",
-    dietaryTags: '["vegan","gluten-free"]',
+    dietaryTags: '["vegan","gluten-free","organic"]',
     vendorName: "Sunset Farms Produce", vendorId: 5, categoryIcon: "🥬",
+    categorySlug: "produce",
     postType: "harvested_today",
     postedAt: hoursAgo(4),
     pickupWindowStart: pickupToday(8),
@@ -166,8 +192,9 @@ const MOCK_LISTINGS = [
     description: "Fresh-cut basil, cilantro, rosemary, and mint from our garden.",
     price: 6.0, quantity: 12,
     photoUrl: "https://images.unsplash.com/photo-1600852659773-7e5a02b35c5a?w=400",
-    dietaryTags: '["vegan","gluten-free"]',
+    dietaryTags: '["vegan","gluten-free","organic"]',
     vendorName: "Sunset Farms Produce", vendorId: 5, categoryIcon: "🌽",
+    categorySlug: "produce",
     postType: "harvested_today",
     postedAt: hoursAgo(12),
     pickupWindowStart: pickupToday(8),
@@ -180,6 +207,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=400",
     dietaryTags: '[]',
     vendorName: "Flower Child Farms", vendorId: 6, categoryIcon: "🌼",
+    categorySlug: "flowers",
     postType: "available_now",
     postedAt: minsAgo(30),
     pickupWindowStart: pickupToday(9),
@@ -192,6 +220,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400",
     dietaryTags: '["vegetarian"]',
     vendorName: "Taco Tones", vendorId: 7, categoryIcon: "🚚",
+    categorySlug: "food-truck",
     postType: "available_now",
     postedAt: hoursAgo(1),
     pickupWindowStart: pickupToday(7),
@@ -204,8 +233,9 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=400",
     dietaryTags: '[]',
     vendorName: "Mama Lu's Kitchen", vendorId: 8, categoryIcon: "🍽️",
+    categorySlug: "meals",
     postType: "available_now",
-    postedAt: hoursAgo(26), // EXPIRED — > 24h
+    postedAt: hoursAgo(26),
     pickupWindowStart: pickupToday(12),
     pickupWindowEnd: pickupToday(20),
   },
@@ -216,6 +246,7 @@ const MOCK_LISTINGS = [
     photoUrl: "https://images.unsplash.com/photo-1558301211-7099e59b9c58?w=400",
     dietaryTags: '["vegan","gluten-free"]',
     vendorName: "Bee Sweet Bakery", vendorId: 9, categoryIcon: "🥧",
+    categorySlug: "desserts",
     postType: "just_made",
     postedAt: hoursAgo(3.5),
     pickupWindowStart: pickupToday(11),
@@ -226,10 +257,11 @@ const MOCK_LISTINGS = [
     description: "3 trays of sunflower, pea shoots, and radish microgreens.",
     price: 15.0, quantity: 5,
     photoUrl: "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=400",
-    dietaryTags: '["vegan","gluten-free"]',
+    dietaryTags: '["vegan","gluten-free","keto","organic"]',
     vendorName: "Green Gate Growers", vendorId: 10, categoryIcon: "🌽",
+    categorySlug: "produce",
     postType: "harvested_today",
-    postedAt: hoursAgo(22), // Still fresh but close to expiry
+    postedAt: hoursAgo(22),
     pickupWindowStart: pickupToday(10),
     pickupWindowEnd: pickupToday(15),
   },
@@ -250,10 +282,17 @@ export const POST_TYPE_META: Record<string, { emoji: string; label: string }> = 
   available_now: { emoji: "🛒", label: "Ready for pickup now" },
 };
 
+function parseDietaryTags(tags: string | null): string[] {
+  if (!tags) return [];
+  try { return JSON.parse(tags); } catch { return []; }
+}
+
 // ── GET ──────────────────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const freshOnly = searchParams.get("fresh") === "true";
+  const dietary = searchParams.get("dietary");
+  const category = searchParams.get("category");
 
   // Merge mock + dynamically created listings from in-memory store
   const store = globalThis.__freshfinds_store;
@@ -273,6 +312,7 @@ export async function GET(request: NextRequest) {
             vendorName: "New Vendor",
             vendorId: l.vendorId,
             categoryIcon: "📦",
+            categorySlug: "other",
             postType: l.postType || "available_now",
             postedAt,
             expiresAt: expireAfter(postedAt),
@@ -287,6 +327,23 @@ export async function GET(request: NextRequest) {
   // Filter fresh only: exclude expired listings
   if (freshOnly) {
     allListings = allListings.filter((l) => new Date(l.expiresAt).getTime() > NOW);
+  }
+
+  // Filter by dietary tags (comma-separated, AND logic — must match all)
+  if (dietary) {
+    const requiredTags = dietary.split(",").map((t) => t.trim().toLowerCase());
+    allListings = allListings.filter((l) => {
+      const tags = parseDietaryTags(l.dietaryTags).map((t) => t.toLowerCase());
+      return requiredTags.every((rt) => tags.includes(rt));
+    });
+  }
+
+  // Filter by category slug
+  if (category) {
+    const categorySlugs = category.split(",").map((c) => c.trim().toLowerCase());
+    allListings = allListings.filter((l) =>
+      categorySlugs.includes((l as any).categorySlug?.toLowerCase() || "")
+    );
   }
 
   return NextResponse.json({ listings: allListings });
