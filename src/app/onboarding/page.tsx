@@ -25,6 +25,7 @@ interface FormData {
   website: string;
   bio: string;
   photoUrl: string;
+  state: string;
   complianceChecked: boolean;
   homeKitchenAck: boolean;
   allowedFoodsAck: boolean;
@@ -43,6 +44,15 @@ interface FormData {
 }
 
 /* ── Constants ─────────────────────────────────────────────── */
+const STATES = [
+  { code: "TX", name: "Texas", compliance: "Texas cottage food law ($150K cap, food handler training)", guidelinesUrl: "https://www.dshs.texas.gov/food-manufacturers/cottage-food-production" },
+  { code: "TN", name: "Tennessee", compliance: "No permit required — just follow TN cottage food guidelines", guidelinesUrl: "https://www.tn.gov/health/health-program-areas/eh/eh-fooddefense/cottagefood.html" },
+  { code: "NC", name: "North Carolina", compliance: "No permit required — follow NC cottage food guidelines", guidelinesUrl: "https://www.ncagr.gov/fooddrug/food/homebiz.htm" },
+  { code: "SC", name: "South Carolina", compliance: "No permit required — follow SC cottage food guidelines", guidelinesUrl: "https://www.scdhec.gov/food-safety/food-safety-manufacturers/cottage-food" },
+  { code: "VA", name: "Virginia", compliance: "No permit required — follow VA cottage food guidelines", guidelinesUrl: "https://www.vdh.virginia.gov/environmental-health/food-safety/cottage-foods/" },
+  { code: "AR", name: "Arkansas", compliance: "No permit required — follow AR cottage food guidelines", guidelinesUrl: "https://www.healthy.arkansas.gov/programs-services/topics/cottage-foods" },
+  { code: "KS", name: "Kansas", compliance: "No permit required — follow KS cottage food guidelines", guidelinesUrl: "https://agriculture.ks.gov/divisions-programs/food-safety-lodging/cottage-foods" },
+];
 const CATEGORIES = [
   { name: "Bread & Pastries", slug: "bread-pastries", icon: "🥖" },
   { name: "Eggs & Dairy", slug: "eggs-dairy", icon: "🥚" },
@@ -97,7 +107,7 @@ function getEmptyForm(): FormData {
   return {
     businessName: "", category: "", address: "",
     lat: 30.2672, lng: -97.7431, phone: "", email: "", website: "",
-    bio: "", photoUrl: "",
+    bio: "", photoUrl: "", state: "TX",
     complianceChecked: false, homeKitchenAck: false,
     allowedFoodsAck: false, labelingAck: false,
     itemName: "", itemCategory: "", itemDescription: "",
@@ -179,6 +189,7 @@ export default function OnboardingPage() {
           bio: form.bio, photoUrl: form.photoUrl,
           categoryName: cat.name, categorySlug: cat.slug,
           categoryIcon: cat.icon, website: form.website,
+          state: form.state, city: form.address?.split(",")[0]?.trim() || "",
         }),
       });
 
@@ -226,14 +237,14 @@ export default function OnboardingPage() {
             You&apos;re live on FreshFinds!
           </h1>
           <p className="text-ink-muted mb-8 max-w-xs leading-relaxed">
-            Your business and first listing are now visible to hungry Austinites. Welcome to the community! 🌿
+            Your business and first listing are now visible to hungry locals. Welcome to the community! 🌿
           </p>
 
           <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-6 w-full space-y-3 mb-6">
             {[
               { icon: Check, label: "Vendor profile created", color: "text-sage-600" },
               { icon: Package, label: "First listing published", color: "text-sage-600" },
-              { icon: MapPin, label: "Visible on the Austin map", color: "text-terra-500" },
+              { icon: MapPin, label: `Visible on the ${(STATES.find(s => s.code === form.state) || STATES[0]).name} map`, color: "text-terra-500" },
               { icon: Leaf, label: 'Appears in "Fresh Right Now" feed', color: "text-sage-600" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3 text-sm text-ink-light font-medium">
@@ -525,62 +536,82 @@ export default function OnboardingPage() {
               </div>
 
               {/* Compliance Checklist */}
-              <div className="bg-honey-50 rounded-3xl p-5 border border-honey-200/40">
-                <h3 className="text-sm font-bold text-honey-800 mb-3 font-serif">
-                  Texas Cottage Food Law Compliance
-                </h3>
-                <p className="text-xs text-honey-700 mb-4 leading-relaxed">
-                  Because you&apos;re selling homemade food in Texas, please acknowledge the following:
-                </p>
+              <div>
+                <label className="block text-sm font-bold text-ink mb-2">
+                  Your State <span className="text-terra-500">*</span>
+                </label>
+                <select
+                  value={form.state}
+                  onChange={(e) => update({ state: e.target.value, complianceChecked: false, homeKitchenAck: false, allowedFoodsAck: false, labelingAck: false })}
+                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans mb-4"
+                >
+                  {STATES.map((s) => (
+                    <option key={s.code} value={s.code}>{s.name}</option>
+                  ))}
+                </select>
+                {(() => {
+                  const stateInfo = STATES.find((s) => s.code === form.state) || STATES[0];
+                  return (
+                    <div className="bg-honey-50 rounded-3xl p-5 border border-honey-200/40">
+                      <h3 className="text-sm font-bold text-honey-800 mb-3 font-serif">
+                        {stateInfo.name} Cottage Food Law Compliance
+                      </h3>
+                      <p className="text-xs text-honey-700 mb-4 leading-relaxed">
+                        Because you&apos;re selling homemade food in {stateInfo.name}, please acknowledge the following:
+                        {stateInfo.compliance}
+                      </p>
 
-                {[
-                  {
-                    key: "complianceChecked" as const,
-                    title: "I understand Texas cottage food laws",
-                    desc: "I've read the Texas DSHS guidelines and understand my responsibilities as a cottage food producer.",
-                    link: "https://www.dshs.texas.gov/food-manufacturers/cottage-food-production",
-                  },
-                  {
-                    key: "homeKitchenAck" as const,
-                    title: "All my products are made in a home kitchen",
-                    desc: "Not in a commercial facility. I meet all sanitary requirements.",
-                  },
-                  {
-                    key: "allowedFoodsAck" as const,
-                    title: "I only sell allowed foods",
-                    desc: "No refrigerated items, no meat or dairy products (unless specifically permitted under cottage food law).",
-                  },
-                  {
-                    key: "labelingAck" as const,
-                    title: "I label all products",
-                    desc: 'With the product name, ingredients list, allergen warnings, and "This food is made in a home kitchen not inspected by a health department" disclaimer.',
-                  },
-                ].map(({ key, title, desc, link }) => (
-                  <label key={key} className="flex items-start gap-3 mb-3.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form[key]}
-                      onChange={(e) => update({ [key]: e.target.checked })}
-                      className="mt-0.5 w-5 h-5 text-sage-500 rounded-lg border-cream-300 focus:ring-sage-400 flex-shrink-0"
-                    />
-                    <span className="text-sm text-ink-light leading-relaxed">
-                      <strong className="text-ink">{title}</strong> — {desc}
-                      {link && (
-                        <>
-                          {" "}
-                          <a
-                            href={link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sage-600 underline font-semibold"
-                          >
-                            Read the guidelines
-                          </a>
-                        </>
-                      )}
-                    </span>
-                  </label>
-                ))}
+                      {[
+                        {
+                          key: "complianceChecked" as const,
+                          title: `I understand ${stateInfo.name} cottage food laws`,
+                          desc: `I've read the ${stateInfo.name} guidelines and understand my responsibilities as a cottage food producer.`,
+                          link: stateInfo.guidelinesUrl,
+                        },
+                        {
+                          key: "homeKitchenAck" as const,
+                          title: "All my products are made in a home kitchen",
+                          desc: "Not in a commercial facility. I meet all sanitary requirements.",
+                        },
+                        {
+                          key: "allowedFoodsAck" as const,
+                          title: "I only sell allowed foods",
+                          desc: "No refrigerated items, no meat or dairy products (unless specifically permitted under cottage food law).",
+                        },
+                        {
+                          key: "labelingAck" as const,
+                          title: "I label all products",
+                          desc: 'With the product name, ingredients list, allergen warnings, and "This food is made in a home kitchen not inspected by a health department" disclaimer.',
+                        },
+                      ].map(({ key, title, desc, link }) => (
+                        <label key={key} className="flex items-start gap-3 mb-3.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form[key]}
+                            onChange={(e) => update({ [key]: e.target.checked })}
+                            className="mt-0.5 w-5 h-5 text-sage-500 rounded-lg border-cream-300 focus:ring-sage-400 flex-shrink-0"
+                          />
+                          <span className="text-sm text-ink-light leading-relaxed">
+                            <strong className="text-ink">{title}</strong> — {desc}
+                            {link && (
+                              <>
+                                {" "}
+                                <a
+                                  href={link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sage-600 underline font-semibold"
+                                >
+                                  Read the guidelines
+                                </a>
+                              </>
+                            )}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

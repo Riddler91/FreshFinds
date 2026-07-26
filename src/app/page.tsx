@@ -13,7 +13,10 @@ import {
   X,
   SlidersHorizontal,
   Loader2,
+  ChevronDown,
+  Building2,
 } from "lucide-react";
+import { CITIES, getCitiesGroupedByState, type CityDef } from "@/lib/data";
 
 /* ── Types ────────────────────────────────────────────────────── */
 interface Vendor {
@@ -65,16 +68,7 @@ const RADIUS_OPTIONS = [
   { value: 50, label: "50 mi" },
 ];
 
-const CITY_PRESETS = [
-  { label: "Austin", zip: "78701", lat: 30.2672, lng: -97.7431 },
-  { label: "Nashville", zip: "37203", lat: 36.1525, lng: -86.7887 },
-  { label: "Charlotte", zip: "28202", lat: 35.2271, lng: -80.8431 },
-  { label: "Charleston", zip: "29401", lat: 32.7765, lng: -79.9311 },
-  { label: "Richmond", zip: "23219", lat: 37.5407, lng: -77.4360 },
-  { label: "Knoxville", zip: "37902", lat: 35.9606, lng: -83.9207 },
-  { label: "Raleigh", zip: "27601", lat: 35.7796, lng: -78.6382 },
-  { label: "Greenville", zip: "29601", lat: 34.8526, lng: -82.3940 },
-];
+const CITY_GROUPS = getCitiesGroupedByState();
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 function haversineKm(a: [number, number], b: [number, number]): number {
@@ -256,6 +250,10 @@ export default function MapPage() {
   const [zipLocation, setZipLocation] = useState<{ lat: number; lng: number; display: string } | null>(null);
   const [radius, setRadius] = useState(10);
   const [geocoding, setGeocoding] = useState(false);
+
+  // City picker
+  const [selectedCity, setSelectedCity] = useState<CityDef>(CITIES[0]); // default: Austin
+  const [showCityPicker, setShowCityPicker] = useState(false);
 
   // Dietary & category filters (enhanced)
   const [showFilters, setShowFilters] = useState(false);
@@ -484,10 +482,24 @@ export default function MapPage() {
     }
   };
 
-  const handleCityPreset = useCallback((preset: typeof CITY_PRESETS[0]) => {
-    const loc = { lat: preset.lat, lng: preset.lng, display: `${preset.label}, TX` };
+  const handleCityPreset = useCallback((city: CityDef) => {
+    const loc = { lat: city.lat, lng: city.lng, display: `${city.name}, ${city.state}` };
     setZipLocation(loc);
-    setZipInput(preset.zip);
+    setZipInput(city.zipHint);
+    setSelectedCity(city);
+    setShowCityPicker(false);
+  }, []);
+
+  const handleCitySelect = useCallback((city: CityDef) => {
+    setSelectedCity(city);
+    const loc = { lat: city.lat, lng: city.lng, display: `${city.name}, ${city.state}` };
+    setZipLocation(loc);
+    setZipInput(city.zipHint);
+    setShowCityPicker(false);
+    // Fly map to city
+    if (mapInstance.current) {
+      mapInstance.current.flyTo([city.lat, city.lng], city.defaultZoom, { duration: 0.8 });
+    }
   }, []);
 
   /* ── Global search with autocomplete ────────────────────────── */
@@ -557,7 +569,7 @@ export default function MapPage() {
                 <span className="text-xl font-bold font-serif text-ink">FreshFinds</span>
               </div>
               <span className="text-xs text-ink-muted bg-cream-50/90 backdrop-blur px-2.5 py-1 rounded-full font-medium border border-cream-200/50 shadow-warm">
-                {zipLocation ? zipLocation.display : "Austin, TX"}
+                {zipLocation ? zipLocation.display : `${selectedCity.name}, ${selectedCity.state}`}
               </span>
             </div>
           </div>
@@ -659,23 +671,62 @@ export default function MapPage() {
             </div>
           </div>
 
-          {/* City preset buttons */}
-          <div className="category-scroll overflow-x-auto px-3 pt-2 pb-1">
-            <div className="flex gap-2 max-w-md mx-auto">
-              {CITY_PRESETS.map((city) => (
-                <button
-                  key={city.zip}
-                  onClick={() => handleCityPreset(city)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                    zipInput === city.zip
-                      ? "bg-sage-500 text-white shadow-warm scale-105"
-                      : "bg-card/90 text-ink-light border border-cream-200/60 hover:bg-cream-100 shadow-warm"
-                  }`}
-                >
-                  📍 {city.label}
-                </button>
-              ))}
+          {/* City picker */}
+          <div className="px-3 pt-2 pb-1">
+            <div className="flex items-center gap-2 max-w-md mx-auto">
+              <button
+                onClick={() => setShowCityPicker(!showCityPicker)}
+                className="flex items-center gap-1.5 bg-card/95 backdrop-blur rounded-2xl shadow-warm border border-cream-200/60 px-3 py-2 text-sm font-semibold text-ink hover:bg-cream-50 transition-all"
+              >
+                <Building2 className="w-4 h-4 text-sage-500" strokeWidth={2} />
+                {selectedCity.name}, {selectedCity.state}
+                <ChevronDown className={`w-4 h-4 text-ink-muted transition-transform ${showCityPicker ? "rotate-180" : ""}`} />
+              </button>
+              <div className="flex items-center gap-1.5 overflow-x-auto flex-1">
+                {CITIES.slice(0, 5).map((city) => (
+                  <button
+                    key={city.slug}
+                    onClick={() => handleCityPreset(city)}
+                    className={`flex-shrink-0 px-2.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                      selectedCity.slug === city.slug
+                        ? "bg-sage-500 text-white shadow-warm scale-105"
+                        : "bg-card/90 text-ink-light border border-cream-200/60 hover:bg-cream-100 shadow-warm"
+                    }`}
+                  >
+                    📍 {city.name}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* City picker dropdown */}
+            {showCityPicker && (
+              <div className="mt-2 max-w-md mx-auto bg-card/98 backdrop-blur rounded-2xl shadow-warm-lg border border-cream-200/60 overflow-hidden z-30 animate-fade-in-up max-h-80 overflow-y-auto">
+                {CITY_GROUPS.map((group) => (
+                  <div key={group.state}>
+                    <div className="px-4 py-2 bg-cream-50/80 text-xs font-bold text-ink-muted uppercase tracking-wider">
+                      {group.stateName}
+                    </div>
+                    {group.cities.map((city) => (
+                      <button
+                        key={city.slug}
+                        onClick={() => handleCitySelect(city)}
+                        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left hover:bg-cream-50 transition-colors ${
+                          selectedCity.slug === city.slug ? "bg-sage-50 font-bold text-sage-700" : "text-ink font-medium"
+                        }`}
+                      >
+                        <span className="text-lg">{selectedCity.slug === city.slug ? "📍" : "🗺️"}</span>
+                        <span>{city.name}</span>
+                        <span className="text-xs text-ink-muted ml-auto">{city.state}</span>
+                        {selectedCity.slug === city.slug && (
+                          <span className="text-xs bg-sage-500 text-white px-1.5 py-0.5 rounded-full">Active</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Radius selector — shown when ZIP is active */}
