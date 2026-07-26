@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CITIES, MOCK_VENDORS, MOCK_LISTINGS_WITH_EXPIRY, type CityDef } from "@/lib/data";
+import { CITIES, type CityDef } from "@/lib/data";
 import CityPageClient from "./client";
 
 export function generateStaticParams() {
@@ -12,21 +12,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const city = CITIES.find((c) => c.slug === slug);
   if (!city) return { title: "City Not Found — FreshFinds" };
 
-  const vendorCount = MOCK_VENDORS.filter(
-    (v) => v.city?.toLowerCase() === city.name.toLowerCase()
-  ).length;
-  const freshCount = MOCK_LISTINGS_WITH_EXPIRY.filter(
-    (l) =>
-      (l as any).city?.toLowerCase() === city.name.toLowerCase() &&
-      new Date((l as any).expiresAt).getTime() > Date.now()
-  ).length;
-
   return {
-    title: `Fresh Food in ${city.name}, ${city.state} — FreshFinds`,
-    description: `Discover ${vendorCount} local cottage food vendors in ${city.name} with ${freshCount} items available right now. ${city.tagline}`,
+    title: `FreshFinds in ${city.name}, ${city.state} — Local Food Coming Soon`,
+    description: `${city.tagline} FreshFinds is launching in ${city.name}. Be the first cottage food vendor to join or discover homemade local food near you.`,
     openGraph: {
-      title: `Fresh Food in ${city.name}, ${city.state} — FreshFinds`,
-      description: `${city.tagline} Browse ${vendorCount} vendors and ${freshCount} fresh items in ${city.name}.`,
+      title: `FreshFinds in ${city.name}, ${city.state} — Local Food Coming Soon`,
+      description: `${city.tagline} Join FreshFinds to discover or sell homemade local food in ${city.name}.`,
       type: "website",
     },
   };
@@ -37,29 +28,15 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
   const city = CITIES.find((c) => c.slug === slug.toLowerCase());
   if (!city) notFound();
 
-  const cityVendors = MOCK_VENDORS.filter(
-    (v) => v.city?.toLowerCase() === city.name.toLowerCase()
-  );
-
-  const cityListings = MOCK_LISTINGS_WITH_EXPIRY.filter(
-    (l) =>
-      (l as any).city?.toLowerCase() === city.name.toLowerCase()
-  );
-
-  const freshListings = cityListings.filter(
-    (l) => new Date((l as any).expiresAt).getTime() > Date.now()
-  );
-
-  const categories = [...new Set(cityVendors.map((v) => v.categoryName))];
-
+  // Clean slate: no mock vendors or listings — only real signups appear
   return (
     <CityPageClient
       city={city}
-      vendorCount={cityVendors.length}
-      freshCount={freshListings.length}
-      categories={categories}
-      initialVendors={cityVendors}
-      initialListings={freshListings.slice(0, 6)}
+      vendorCount={0}
+      freshCount={0}
+      categories={[]}
+      initialVendors={[]}
+      initialListings={[]}
     />
   );
 }

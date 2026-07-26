@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Star, Clock, Leaf, Package, Store } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Clock, Leaf, Package, Store, Sparkles } from "lucide-react";
 import { type CityDef, CITIES } from "@/lib/data";
 
 interface Vendor {
@@ -79,6 +79,8 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
   const [listings, setListings] = useState<Listing[]>(initialListings as Listing[]);
   const [mapReady, setMapReady] = useState(false);
 
+  const hasVendors = vendors.length > 0;
+
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -113,7 +115,7 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
     initMap();
   }, [city]);
 
-  // Place markers
+  // Place markers only if there are vendors
   useEffect(() => {
     if (!mapReady) return;
 
@@ -158,7 +160,9 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
             {city.name}, {city.state}
           </h1>
           <p className="text-lg text-ink-muted mb-4 font-medium">
-            Discover fresh, local food in {city.name}
+            {hasVendors
+              ? `Discover fresh, local food in ${city.name}`
+              : `Local food is coming to ${city.name}`}
           </p>
           <p className="text-sm text-ink-light italic max-w-md">
             {city.tagline}
@@ -190,10 +194,22 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
       {/* Map */}
       <div className="max-w-lg mx-auto w-full px-4 -mt-2 mb-6">
         <div className="rounded-3xl overflow-hidden shadow-warm border border-cream-200/40 h-64 bg-cream-100">
-          <div ref={mapRef} className="w-full h-full" />
+          <div ref={mapRef} className="w-full h-full relative">
+            {!hasVendors && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-cream-50/60 backdrop-blur-sm pointer-events-none">
+                <div className="text-center px-6">
+                  <MapPin className="w-8 h-8 text-sage-400 mx-auto mb-2" strokeWidth={1.5} />
+                  <p className="text-sm font-bold text-ink-muted font-serif">No vendors in {city.name} yet</p>
+                  <p className="text-xs text-ink-muted mt-1">Be the first to plant a pin! 🌱</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-xs text-ink-muted mt-2 text-center font-medium">
-          📍 {vendorCount} cottage food vendors across {city.name}
+          {hasVendors
+            ? `📍 ${vendorCount} cottage food vendors across ${city.name}`
+            : `📍 Be the first vendor in ${city.name}!`}
         </p>
       </div>
 
@@ -209,9 +225,20 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
 
         {listings.length === 0 ? (
           <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-8 text-center">
-            <p className="text-ink-muted font-medium">No fresh items right now — check back soon!</p>
-            <Link href="/" className="text-sage-600 font-bold text-sm mt-2 inline-block hover:underline">
-              Browse all cities →
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-cream-100 flex items-center justify-center shadow-warm">
+              <Sparkles className="w-10 h-10 text-honey-400" strokeWidth={1.5} />
+            </div>
+            <p className="text-ink-light font-bold font-serif text-lg mb-2">
+              No fresh items in {city.name} yet
+            </p>
+            <p className="text-ink-muted text-sm max-w-xs mx-auto leading-relaxed mb-5">
+              When local vendors post their fresh bread, produce, and homemade goods, they&apos;ll appear right here.
+            </p>
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-5 py-3 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
+            >
+              <Store className="w-4 h-4" /> Become the First Vendor
             </Link>
           </div>
         ) : (
@@ -261,14 +288,23 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
           </div>
         )}
 
-        {/* View all vendors */}
+        {/* CTA */}
         <div className="mt-6">
-          <Link
-            href={`/?city=${city.slug}`}
-            className="block w-full text-center bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
-          >
-            View All Vendors on Map →
-          </Link>
+          {hasVendors ? (
+            <Link
+              href={`/?city=${city.slug}`}
+              className="block w-full text-center bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
+            >
+              View All Vendors on Map →
+            </Link>
+          ) : (
+            <Link
+              href="/onboarding"
+              className="block w-full text-center bg-sage-500 text-white font-bold py-3.5 rounded-2xl hover:bg-sage-400 transition-all shadow-warm active:scale-[0.98]"
+            >
+              🚀 Be the First to Join in {city.name} — Sign Up Free
+            </Link>
+          )}
         </div>
       </div>
 
@@ -277,40 +313,61 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
         <h2 className="text-xl font-bold font-serif text-ink mb-4">
           Vendors in {city.name}
         </h2>
-        <div className="grid gap-3">
-          {vendors.map((vendor) => (
+
+        {!hasVendors ? (
+          <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-cream-100 flex items-center justify-center shadow-warm">
+              <Store className="w-10 h-10 text-sage-400" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-ink-light font-bold font-serif text-lg mb-2">
+              No vendors in {city.name} yet
+            </h3>
+            <p className="text-ink-muted text-sm max-w-xs mx-auto leading-relaxed mb-5">
+              Know someone who bakes, grows, or makes amazing food? Tell them to sign up — it&apos;s free and takes 2 minutes!
+            </p>
             <Link
-              key={vendor.id}
-              href={`/vendor/${vendor.id}`}
-              className="bg-card rounded-2xl shadow-warm border border-cream-200/40 p-4 flex items-center gap-3 hover:shadow-warm-lg transition-shadow active:scale-[0.98]"
+              href="/onboarding"
+              className="inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-5 py-3 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
             >
-              <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-cream-100">
-                {vendor.photoUrl ? (
-                  <img src={vendor.photoUrl} alt={vendor.businessName} className="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl">{vendor.categoryIcon}</div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-sm text-ink">{vendor.businessName}</h3>
-                <p className="text-xs text-ink-muted mt-0.5">
-                  {vendor.categoryIcon} {vendor.categoryName}
-                </p>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <Star className="w-3 h-3 text-honey-500 fill-honey-500" />
-                  <span className="text-xs font-semibold text-ink">{vendor.rating}</span>
-                  <span className="text-[10px] text-ink-muted">({vendor.reviewCount})</span>
-                  {vendor.hasFreshItems && (
-                    <span className="text-[10px] bg-sage-50 text-sage-600 px-1.5 py-0.5 rounded-full font-bold ml-1">
-                      Fresh Now
-                    </span>
+              <Store className="w-4 h-4" /> Become the First Vendor
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {vendors.map((vendor) => (
+              <Link
+                key={vendor.id}
+                href={`/vendor/${vendor.id}`}
+                className="bg-card rounded-2xl shadow-warm border border-cream-200/40 p-4 flex items-center gap-3 hover:shadow-warm-lg transition-shadow active:scale-[0.98]"
+              >
+                <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-cream-100">
+                  {vendor.photoUrl ? (
+                    <img src={vendor.photoUrl} alt={vendor.businessName} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl">{vendor.categoryIcon}</div>
                   )}
                 </div>
-              </div>
-              <ArrowLeft className="w-4 h-4 text-ink-muted rotate-180" />
-            </Link>
-          ))}
-        </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm text-ink">{vendor.businessName}</h3>
+                  <p className="text-xs text-ink-muted mt-0.5">
+                    {vendor.categoryIcon} {vendor.categoryName}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Star className="w-3 h-3 text-honey-500 fill-honey-500" />
+                    <span className="text-xs font-semibold text-ink">{vendor.rating}</span>
+                    <span className="text-[10px] text-ink-muted">({vendor.reviewCount})</span>
+                    {vendor.hasFreshItems && (
+                      <span className="text-[10px] bg-sage-50 text-sage-600 px-1.5 py-0.5 rounded-full font-bold ml-1">
+                        Fresh Now
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ArrowLeft className="w-4 h-4 text-ink-muted rotate-180" />
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Other cities */}

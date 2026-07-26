@@ -871,9 +871,11 @@ export default function MapPage() {
       <div className="absolute bottom-24 left-3 z-10 pointer-events-none">
         <div className="bg-card/95 backdrop-blur rounded-2xl shadow-warm px-3 py-2 text-xs font-semibold text-ink-muted pointer-events-auto border border-cream-200/40 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-sage-500" />
-          {zipLocation
-            ? `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""} within ${radius} mi`
-            : `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""}`}
+          {filteredVendors.length === 0 && !isLoading
+            ? `Be the first vendor in ${selectedCity.name}!`
+            : zipLocation
+              ? `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""} within ${radius} mi`
+              : `${filteredVendors.length} vendor${filteredVendors.length !== 1 ? "s" : ""}`}
         </div>
       </div>
 
@@ -885,6 +887,32 @@ export default function MapPage() {
               <Leaf className="w-8 h-8 text-sage-400 animate-pulse" strokeWidth={1.5} />
             </div>
             <p className="text-ink-muted text-sm font-medium">Finding fresh food near you...</p>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Empty state overlay (no vendors, map loaded) ────────── */}
+      {!isLoading && mapReady && filteredVendors.length === 0 && (
+        <div className="absolute bottom-24 left-0 right-0 z-10 px-4">
+          <div className="max-w-md mx-auto bg-card/95 backdrop-blur rounded-3xl shadow-warm-lg border border-cream-200/60 p-6 text-center animate-fade-in-up">
+            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-sage-50 flex items-center justify-center shadow-warm">
+              <MapPin className="w-8 h-8 text-sage-500" strokeWidth={1.5} />
+            </div>
+            <h2 className="text-lg font-bold font-serif text-ink mb-2">
+              No vendors in {selectedCity.name} yet — be the first!
+            </h2>
+            <p className="text-sm text-ink-muted mb-4 max-w-xs mx-auto leading-relaxed">
+              {selectedCity.name} is waiting for its first cottage food vendor. If you bake, grow, or make food at home, you could be the one to put {selectedCity.name} on the map!
+            </p>
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-6 py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
+            >
+              🚀 Sign Up as a Vendor — It&apos;s Free
+            </Link>
+            <p className="text-xs text-ink-muted mt-3">
+              Try a different city? Use the city picker above ↑
+            </p>
           </div>
         </div>
       )}

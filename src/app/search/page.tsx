@@ -97,10 +97,15 @@ export default function SearchPage() {
           <div className="text-center py-20">
             <Package className="w-12 h-12 text-ink-muted mx-auto mb-4" strokeWidth={1} />
             <p className="text-ink-light font-bold font-serif text-lg mb-1">No results for "{query}"</p>
-            <p className="text-ink-muted text-sm">Try a different search term or browse the map.</p>
-            <Link href="/" className="mt-4 inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-5 py-3 rounded-2xl hover:bg-terra-400 transition-all shadow-warm">
-              Browse Map →
-            </Link>
+            <p className="text-ink-muted text-sm mb-6">Try a different search term or browse the map.</p>
+            <div className="flex flex-col items-center gap-3">
+              <Link href="/" className="inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-5 py-3 rounded-2xl hover:bg-terra-400 transition-all shadow-warm">
+                Browse Map →
+              </Link>
+              <Link href="/onboarding" className="text-sm font-semibold text-sage-600 hover:text-sage-500 transition-colors">
+                🌱 Don&apos;t see your favorite vendor? Invite them to join!
+              </Link>
+            </div>
           </div>
         ) : (
           <>

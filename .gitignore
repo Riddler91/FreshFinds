@@ -40,4 +40,7 @@ next-env.d.ts
 
 # local data
 data/
-data/
+
+# dev logs
+dev*.log
+server.log

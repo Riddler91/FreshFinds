@@ -232,19 +232,25 @@ export default function FeedPage() {
   const EmptyState = () => (
     <div className="text-center py-16">
       <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-cream-100 flex items-center justify-center shadow-warm">
-        <span className="text-5xl">🌅</span>
+        <span className="text-5xl">🌱</span>
       </div>
       <p className="text-ink-light text-xl font-bold font-serif mb-3">
-        Nothing fresh right now
+        Waiting for the first fresh post!
       </p>
       <p className="text-ink-muted text-sm max-w-xs mx-auto leading-relaxed mb-6">
-        Check back soon — vendors post throughout the day! Fresh bread, produce, and homemade goods appear here as they&apos;re made.
+        This is where fresh bread, just-picked produce, and homemade goods will appear. Local vendors post throughout the day — be the first to start the feed!
       </p>
-      <div className="bg-honey-50 border border-honey-200/40 rounded-2xl p-4 max-w-sm mx-auto">
+      <div className="bg-honey-50 border border-honey-200/40 rounded-2xl p-4 max-w-sm mx-auto mb-4">
         <p className="text-sm text-honey-800 font-semibold">
-          💡 Know a local vendor? Tell them to post their fresh items on FreshFinds!
+          💡 Know a local baker, farmer, or home cook? Tell them to list their fresh items on FreshFinds!
         </p>
       </div>
+      <Link
+        href="/onboarding"
+        className="inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-6 py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
+      >
+        🚀 Start Selling — Join as a Vendor
+      </Link>
     </div>
   );
 

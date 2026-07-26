@@ -241,18 +241,31 @@ export default function VendorProfilePage() {
     return (
       <div className="flex flex-col min-h-[100dvh] bg-cream-50">
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center px-4">
-            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-cream-100 flex items-center justify-center">
+          <div className="text-center px-4 max-w-sm">
+            <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-cream-100 flex items-center justify-center shadow-warm">
               <Leaf className="w-12 h-12 text-sage-400" strokeWidth={1} />
             </div>
-            <p className="text-ink text-xl font-bold font-serif mb-2">Vendor not found</p>
-            <p className="text-ink-muted text-sm">This vendor may have moved or no longer exists.</p>
-            <Link
-              href="/"
-              className="mt-6 inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-6 py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to Map
-            </Link>
+            <h1 className="text-ink text-2xl font-bold font-serif mb-3">Vendor Not Found</h1>
+            <p className="text-ink-muted text-sm leading-relaxed mb-2">
+              This vendor may not exist yet — or their page may have moved. FreshFinds is growing and new vendors join every day!
+            </p>
+            <p className="text-ink-muted text-xs mb-6">
+              Are you a local food maker? This could be your spot. 🌱
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-2 bg-terra-500 text-white font-bold px-6 py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to Map
+              </Link>
+              <Link
+                href="/onboarding"
+                className="inline-flex items-center justify-center gap-2 bg-sage-100 text-sage-700 font-bold px-6 py-3.5 rounded-2xl hover:bg-sage-200 transition-all border border-sage-200/40 active:scale-[0.98]"
+              >
+                🚀 Become a Vendor
+              </Link>
+            </div>
           </div>
         </div>
       </div>
