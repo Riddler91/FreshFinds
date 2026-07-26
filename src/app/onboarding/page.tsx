@@ -12,6 +12,7 @@ import {
   Leaf,
   Share2,
 } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface FormData {
@@ -514,28 +515,12 @@ export default function OnboardingPage() {
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1.5">Cover Photo URL</label>
-                <input
-                  type="url"
-                  value={form.photoUrl}
-                  onChange={(e) => update({ photoUrl: e.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                />
-                {form.photoUrl && (
-                  <div className="mt-2 aspect-[2/1] rounded-2xl bg-cream-100 overflow-hidden shadow-warm">
-                    <img
-                      src={form.photoUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
+              <ImageUpload
+                value={form.photoUrl}
+                onChange={(url) => update({ photoUrl: url })}
+                label="Cover Photo"
+                aspectRatio="2/1"
+              />
 
               {/* Messaging Opt-In */}
               <div>
@@ -740,16 +725,12 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1.5">Item Photo URL</label>
-                <input
-                  type="url"
-                  value={form.itemPhotoUrl}
-                  onChange={(e) => update({ itemPhotoUrl: e.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-                />
-              </div>
+              <ImageUpload
+                value={form.itemPhotoUrl}
+                onChange={(url) => update({ itemPhotoUrl: url })}
+                label="Item Photo"
+                aspectRatio="16/9"
+              />
 
               <div>
                 <label className="block text-sm font-bold text-ink mb-2">Dietary Tags</label>

@@ -10,6 +10,7 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
 
 /* ── Types ─────────────────────────────────────────────────── */
 type PostTypeKey = "baked_today" | "harvested_today" | "just_made" | "limited_batch" | "available_now";
@@ -335,27 +336,13 @@ export default function PostPage() {
             </div>
           </div>
 
-          {/* Photo URL */}
-          <div>
-            <label className="block text-sm font-bold text-ink mb-1.5">Photo URL</label>
-            <input
-              type="url"
-              value={form.photoUrl}
-              onChange={(e) => update({ photoUrl: e.target.value })}
-              placeholder="https://images.unsplash.com/photo-..."
-              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
-            />
-            {form.photoUrl && (
-              <div className="mt-2 aspect-[16/9] rounded-2xl bg-cream-100 overflow-hidden shadow-warm">
-                <img
-                  src={form.photoUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              </div>
-            )}
-          </div>
+          {/* Photo */}
+          <ImageUpload
+            value={form.photoUrl}
+            onChange={(url) => update({ photoUrl: url })}
+            label="Photo"
+            aspectRatio="16/9"
+          />
 
           {/* Pickup Window */}
           <div>
