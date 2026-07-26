@@ -275,3 +275,90 @@ body {
 .golden-glow {
   background: radial-gradient(ellipse at top, rgba(212, 168, 83, 0.15), transparent 70%);
 }
+
+/* ── Gold pulse animation for "Just Posted!" ────────────────── */
+
+@keyframes goldPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-gold-pulse {
+  animation: goldPulse 2s ease-in-out infinite;
+}
+
+/* ── Scale pulse for Live indicator ─────────────────────────── */
+
+@keyframes scalePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.animate-scale-pulse {
+  animation: scalePulse 2s ease-in-out infinite;
+}
+
+/* ── Slide in from left ─────────────────────────────────────── */
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s ease-out both;
+}
+
+/* ── Bounce entrance ────────────────────────────────────────── */
+
+@keyframes bounceEntrance {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-bounce-entrance {
+  animation: bounceEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Sparkle rotation ───────────────────────────────────────── */
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.2) rotate(10deg); }
+}
+.animate-sparkle {
+  animation: sparkle 3s ease-in-out infinite;
+}
+
+/* ── Freshness progress bar gradient ────────────────────────── */
+
+.fresh-bar {
+  background: linear-gradient(90deg, #5B8C5A 0%, #7C9082 100%);
+}
+.fresh-bar-low {
+  background: linear-gradient(90deg, #C2765C 0%, #D4A853 100%);
+}
+
+/* ── Golden hero gradient ───────────────────────────────────── */
+
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    rgba(212, 168, 83, 0.12) 0%,
+    rgba(254, 249, 240, 0.6) 40%,
+    rgba(123, 144, 130, 0.06) 100%
+  );
+}
+
+/* ── Subtle rotation for refresh icon ───────────────────────── */
+
+@keyframes spinOnce {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-once {
+  animation: spinOnce 0.6s ease-in-out;
+}

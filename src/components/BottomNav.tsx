@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MapPin, Clock, Store } from "lucide-react";
+import { MapPin, Clock, PlusCircle, Store } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Map", icon: MapPin },
   { href: "/feed", label: "Fresh Now", icon: Clock },
+  { href: "/post", label: "Post", icon: PlusCircle },
   { href: "/onboarding", label: "Sell", icon: Store },
 ];
 
