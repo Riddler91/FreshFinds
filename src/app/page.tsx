@@ -94,6 +94,151 @@ function haversineMi(a: [number, number], b: [number, number]): number {
 }
 
 /* ── Component ────────────────────────────────────────────────── */
+
+/* ── BottomSheet with swipe-to-dismiss ───────────────────────── */
+function BottomSheet({
+  vendor,
+  onClose,
+}: {
+  vendor: Vendor;
+  onClose: () => void;
+}) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const startY = useRef<number>(0);
+  const currentY = useRef<number>(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    // Only start drag if touching near the handle or at the top of scroll
+    if (sheet.scrollTop <= 0) {
+      startY.current = e.touches[0].clientY;
+      isDragging.current = true;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    currentY.current = e.touches[0].clientY;
+    const delta = currentY.current - startY.current;
+    if (delta > 0) {
+      sheet.style.transform = `translateY(${delta}px)`;
+      sheet.classList.add("swiping");
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    const delta = currentY.current - startY.current;
+    sheet.classList.remove("swiping");
+
+    if (delta > 100) {
+      // Dismiss
+      sheet.classList.add("dismissing");
+      const overlay = sheet.parentElement;
+      if (overlay) overlay.classList.add("dismissing");
+      setTimeout(onClose, 250);
+    } else {
+      // Snap back
+      sheet.style.transform = "";
+    }
+  };
+
+  return (
+    <div
+      className="bottom-sheet-overlay"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).classList.contains("bottom-sheet-overlay")) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        ref={sheetRef}
+        className="bottom-sheet"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="bottom-sheet-handle" />
+
+        <div className="p-5">
+          {/* Photo + header */}
+          <div className="flex gap-3 mb-4">
+            {vendor.photoUrl ? (
+              <img
+                src={vendor.photoUrl}
+                alt={vendor.businessName}
+                className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 shadow-warm"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-2xl bg-cream-100 flex items-center justify-center flex-shrink-0 text-2xl shadow-warm">
+                {vendor.categoryIcon}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold font-serif text-ink truncate">
+                {vendor.businessName}
+              </h2>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Star className="w-3.5 h-3.5 text-honey-500 fill-honey-500" />
+                <span className="text-sm font-semibold text-ink">{vendor.rating}</span>
+                <span className="text-xs text-ink-muted">({vendor.reviewCount})</span>
+              </div>
+              <div className="flex items-center gap-2 mt-1 text-xs text-ink-muted">
+                <span>{vendor.categoryIcon} {vendor.categoryName}</span>
+                {vendor.distance !== undefined && (
+                  <span>• {vendor.distance < 1 ? `${(vendor.distance * 1000).toFixed(0)}m` : `${vendor.distance.toFixed(1)}km`} away</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Fresh Now badge */}
+          {vendor.hasFreshItems && (
+            <div className="flex items-center gap-2 mb-3 bg-cream-50 rounded-2xl px-3 py-2 border border-cream-200/60">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-sage-500" />
+              </span>
+              <span className="text-sm font-bold text-sage-600 font-sans">
+                {vendor.listingCount} item{vendor.listingCount !== 1 ? "s" : ""} fresh right now!
+              </span>
+            </div>
+          )}
+
+          {/* Bio */}
+          {vendor.bio && (
+            <p className="text-sm text-ink-light mb-3 line-clamp-2 leading-relaxed">{vendor.bio}</p>
+          )}
+
+          {/* Address */}
+          <p className="text-xs text-ink-muted mb-4 flex items-center gap-1">
+            <MapPin className="w-3 h-3" /> {vendor.address}
+          </p>
+
+          {/* View Vendor button */}
+          <Link
+            href={`/vendor/${vendor.id}`}
+            className="block w-full text-center bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98] touch-scale"
+          >
+            View Vendor →
+          </Link>
+
+          <p className="text-center text-xs text-ink-muted mt-3">Swipe down to dismiss</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── MapPage Component ────────────────────────────────────────── */
 export default function MapPage() {
   const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -695,84 +840,10 @@ export default function MapPage() {
 
       {/* ─── Bottom Sheet ───────────────────────────────────────── */}
       {selectedVendor && (
-        <div
-          className="bottom-sheet-overlay"
-          onClick={(e) => {
-            if ((e.target as HTMLElement).classList.contains("bottom-sheet-overlay")) {
-              setSelectedVendor(null);
-            }
-          }}
-        >
-          <div className="bottom-sheet">
-            <div className="bottom-sheet-handle" />
-
-            <div className="p-5">
-              {/* Photo + header */}
-              <div className="flex gap-3 mb-4">
-                {selectedVendor.photoUrl ? (
-                  <img
-                    src={selectedVendor.photoUrl}
-                    alt={selectedVendor.businessName}
-                    className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 shadow-warm"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-cream-100 flex items-center justify-center flex-shrink-0 text-2xl shadow-warm">
-                    {selectedVendor.categoryIcon}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold font-serif text-ink truncate">
-                    {selectedVendor.businessName}
-                  </h2>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Star className="w-3.5 h-3.5 text-honey-500 fill-honey-500" />
-                    <span className="text-sm font-semibold text-ink">{selectedVendor.rating}</span>
-                    <span className="text-xs text-ink-muted">({selectedVendor.reviewCount})</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-ink-muted">
-                    <span>{selectedVendor.categoryIcon} {selectedVendor.categoryName}</span>
-                    {selectedVendor.distance !== undefined && (
-                      <span>• {selectedVendor.distance < 1 ? `${(selectedVendor.distance * 1000).toFixed(0)}m` : `${selectedVendor.distance.toFixed(1)}km`} away</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Fresh Now badge */}
-              {selectedVendor.hasFreshItems && (
-                <div className="flex items-center gap-2 mb-3 bg-cream-50 rounded-2xl px-3 py-2 border border-cream-200/60">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-sage-500" />
-                  </span>
-                  <span className="text-sm font-bold text-sage-600 font-sans">
-                    {selectedVendor.listingCount} item{selectedVendor.listingCount !== 1 ? "s" : ""} fresh right now!
-                  </span>
-                </div>
-              )}
-
-              {/* Bio */}
-              {selectedVendor.bio && (
-                <p className="text-sm text-ink-light mb-3 line-clamp-2 leading-relaxed">{selectedVendor.bio}</p>
-              )}
-
-              {/* Address */}
-              <p className="text-xs text-ink-muted mb-4 flex items-center gap-1">
-                <MapPin className="w-3 h-3" /> {selectedVendor.address}
-              </p>
-
-              {/* View Vendor button */}
-              <Link
-                href={`/vendor/${selectedVendor.id}`}
-                className="block w-full text-center bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
-              >
-                View Vendor →
-              </Link>
-
-              <p className="text-center text-xs text-ink-muted mt-3">Swipe down to dismiss</p>
-            </div>
-          </div>
-        </div>
+        <BottomSheet
+          vendor={selectedVendor}
+          onClose={() => setSelectedVendor(null)}
+        />
       )}
 
       {/* ─── Bottom Nav spacer ──────────────────────────────────── */}

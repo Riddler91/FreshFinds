@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getStore } from "@/lib/store";
 
 // ── Compute relative postedAt for mock data ──────────────────────────
 const NOW = Date.now();
@@ -274,7 +275,7 @@ const LISTINGS_WITH_EXPIRY = MOCK_LISTINGS.map((l) => ({
 }));
 
 // ── Post type metadata ───────────────────────────────────────────────
-export const POST_TYPE_META: Record<string, { emoji: string; label: string }> = {
+const POST_TYPE_META: Record<string, { emoji: string; label: string }> = {
   baked_today: { emoji: "🥖", label: "Baked fresh this morning" },
   harvested_today: { emoji: "🌽", label: "Picked this morning" },
   just_made: { emoji: "🍪", label: "Cooling on the rack right now" },
@@ -295,7 +296,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category");
 
   // Merge mock + dynamically created listings from in-memory store
-  const store = globalThis.__freshfinds_store;
+  const store = getStore();
   const dynListings = store
     ? store.listings
         .filter((l: any) => l.isActive !== false)
@@ -353,11 +354,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body = await request.json();
 
-  if (!globalThis.__freshfinds_store) {
+  const store = getStore();
+  if (!store) {
     return NextResponse.json({ error: "Store not initialized. Create a vendor first." }, { status: 400 });
   }
 
-  const store = globalThis.__freshfinds_store;
   const id = store.nextListingId++;
   const now = new Date().toISOString();
 

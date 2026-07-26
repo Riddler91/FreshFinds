@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { haversineMi } from "@/lib/haversine";
+import { getStore } from "@/lib/store";
 
 // ── In-memory store for dynamically created vendors/listings ──────────
 interface VendorRecord {
@@ -49,36 +50,12 @@ interface ReviewRecord {
   createdAt: string;
 }
 
-declare global {
-  var __freshfinds_store: {
-    vendors: VendorRecord[];
-    listings: ListingRecord[];
-    reviews: ReviewRecord[];
-    messages: any[];
-    nextVendorId: number;
-    nextListingId: number;
-    nextReviewId: number;
-    nextMessageId: number;
-  } | undefined;
-}
-
-function getStore() {
-  if (!globalThis.__freshfinds_store) {
-    globalThis.__freshfinds_store = {
-      vendors: [],
-      listings: [],
-      reviews: [],
-      messages: [],
-      nextVendorId: 100,
-      nextListingId: 200,
-      nextReviewId: 300,
-      nextMessageId: 1,
-    };
-  } else if (!globalThis.__freshfinds_store.messages) {
-    globalThis.__freshfinds_store.messages = [];
-    globalThis.__freshfinds_store.nextMessageId = 1;
+function initMessages() {
+  const store = getStore();
+  if (!store.messages) {
+    store.messages = [];
+    store.nextMessageId = 1;
   }
-  return globalThis.__freshfinds_store;
 }
 
 // ── Seed mock data ─────────────────────────────────────────────────────

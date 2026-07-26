@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "bun run src/db/seed.ts",
+    "db:seed": "bun run scripts/seed.ts",
     "publish": "bash ./publish.sh"
   },
   "dependencies": {

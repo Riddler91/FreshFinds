@@ -19,12 +19,23 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "FreshFinds — Local Food, Fresh Right Now",
   description:
-    "Discover homemade food, farm stands, and cottage food vendors near you in Austin, TX.",
+    "Discover fresh, local, homemade food near you. Browse farm stands, cottage food vendors, and specialty producers in your area.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "FreshFinds",
+    statusBarStyle: "default",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   themeColor: "#7C9082",
 };
@@ -36,7 +47,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${nunito.variable} ${playfair.variable}`}>
-      <body className="min-h-screen bg-cream-50 text-ink antialiased font-sans">
+      <head>
+        {/* PWA / Apple meta tags */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="FreshFinds" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <meta name="theme-color" content="#7C9082" />
+        <meta name="format-detection" content="telephone=no" />
+      </head>
+      <body className="min-h-screen bg-cream-50 text-ink antialiased font-sans overscroll-none">
         <main className="relative">{children}</main>
         <BottomNav />
       </body>
