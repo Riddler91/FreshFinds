@@ -170,3 +170,12 @@ body {
 .leaflet-popup-content-wrapper {
   border-radius: 12px !important;
 }
+
+/* Hide scrollbars for horizontal scrolling carousels */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
