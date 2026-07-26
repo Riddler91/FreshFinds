@@ -8,9 +8,14 @@
 @import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 :root {
-  --fresh-green: #22c55e;
-  --austin-orange: #f97316;
+  --sage: #7C9082;
+  --terra: #C2765C;
+  --honey: #D4A853;
+  --cream: #FEF9F0;
+  --ink: #3D2C1E;
 }
+
+/* ── Base ─────────────────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
@@ -21,38 +26,51 @@ html {
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  background-color: #FEF9F0;
+  color: #3D2C1E;
 }
 
-/* Leaflet container must have explicit height */
+/* ── Typography helpers ───────────────────────────────────── */
+
+.font-serif {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+}
+
+.font-sans {
+  font-family: var(--font-nunito), system-ui, -apple-system, sans-serif;
+}
+
+/* ── Leaflet ──────────────────────────────────────────────── */
+
 .leaflet-container {
   width: 100%;
   height: 100%;
   z-index: 1;
 }
 
-/* Custom vendor marker */
+/* ── Vendor markers ───────────────────────────────────────── */
+
 .vendor-marker {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  font-size: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-  border: 3px solid #fff;
-  transition: transform 0.15s ease;
+  font-size: 22px;
+  box-shadow: 0 3px 10px rgba(61, 44, 30, 0.2);
+  border: 3px solid #FFFBF5;
+  transition: transform 0.2s ease;
   cursor: pointer;
   position: relative;
 }
 .vendor-marker.fresh {
-  background: #22c55e;
-  border-color: #fff;
+  background: #5B8C5A;
+  border-color: #FFFBF5;
 }
 .vendor-marker.stale {
-  background: #9ca3af;
-  border-color: #fff;
+  background: #9B8E82;
+  border-color: #FFFBF5;
 }
 
 /* Pulse ring for fresh vendors */
@@ -61,64 +79,84 @@ body {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 3px solid #22c55e;
+  border: 3px solid #5B8C5A;
   animation: fresh-pulse 2s ease-in-out infinite;
 }
-@keyframes fresh-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0; }
+
+.vendor-marker.bouncing {
+  animation: marker-bounce 0.6s ease-in-out;
+}
+@keyframes marker-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-8px); }
+  50% { transform: translateY(0); }
+  70% { transform: translateY(-4px); }
 }
 
-/* Cluster customization */
+@keyframes fresh-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0; }
+}
+
+/* ── Cluster customization ────────────────────────────────── */
+
 .marker-cluster-small {
-  background-color: rgba(34, 197, 94, 0.2) !important;
+  background-color: rgba(123, 144, 130, 0.2) !important;
 }
 .marker-cluster-small div {
-  background-color: rgba(34, 197, 94, 0.7) !important;
-  color: #fff !important;
+  background-color: rgba(123, 144, 130, 0.75) !important;
+  color: #FFFBF5 !important;
   font-weight: 700 !important;
 }
 .marker-cluster-medium {
-  background-color: rgba(249, 115, 22, 0.2) !important;
+  background-color: rgba(194, 118, 92, 0.2) !important;
 }
 .marker-cluster-medium div {
-  background-color: rgba(249, 115, 22, 0.7) !important;
-  color: #fff !important;
+  background-color: rgba(194, 118, 92, 0.75) !important;
+  color: #FFFBF5 !important;
   font-weight: 700 !important;
 }
 .marker-cluster-large {
-  background-color: rgba(220, 38, 38, 0.2) !important;
+  background-color: rgba(212, 168, 83, 0.2) !important;
 }
 .marker-cluster-large div {
-  background-color: rgba(220, 38, 38, 0.7) !important;
-  color: #fff !important;
+  background-color: rgba(212, 168, 83, 0.75) !important;
+  color: #FFFBF5 !important;
   font-weight: 700 !important;
 }
 
-/* Find Me button */
+/* ── Find Me button ───────────────────────────────────────── */
+
 .find-me-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  width: 44px;
+  height: 44px;
+  border-radius: 1rem;
+  background: #FFFBF5;
+  border: 2px solid #FAEED9;
+  box-shadow: 0 3px 12px rgba(61, 44, 30, 0.1);
   cursor: pointer;
   font-size: 20px;
-  transition: background 0.15s;
+  transition: all 0.2s ease;
+}
+.find-me-btn:hover {
+  background: #FDF5E6;
+  box-shadow: 0 4px 16px rgba(61, 44, 30, 0.15);
 }
 .find-me-btn:active {
-  background: #f3f4f6;
+  background: #FAEED9;
+  transform: scale(0.95);
 }
 
-/* Bottom sheet styles */
+/* ── Bottom sheet ─────────────────────────────────────────── */
+
 .bottom-sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.3);
+  background: rgba(61, 44, 30, 0.35);
+  backdrop-filter: blur(2px);
   z-index: 1000;
   display: flex;
   align-items: flex-end;
@@ -128,11 +166,11 @@ body {
   width: 100%;
   max-width: 28rem;
   max-height: 70vh;
-  background: #fff;
-  border-radius: 1rem 1rem 0 0;
+  background: #FFFBF5;
+  border-radius: 1.5rem 1.5rem 0 0;
   overflow-y: auto;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-  animation: slide-up 0.25s ease-out;
+  box-shadow: 0 -8px 30px rgba(61, 44, 30, 0.15);
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 @keyframes slide-up {
@@ -140,14 +178,15 @@ body {
   to { transform: translateY(0); }
 }
 .bottom-sheet-handle {
-  width: 2rem;
-  height: 4px;
-  border-radius: 2px;
-  background: #d1d5db;
-  margin: 0.5rem auto 0;
+  width: 2.5rem;
+  height: 5px;
+  border-radius: 3px;
+  background: #E0C998;
+  margin: 0.75rem auto 0;
 }
 
-/* Category filter scrollbar hide */
+/* ── Category filter scrollbar hide ───────────────────────── */
+
 .category-scroll::-webkit-scrollbar {
   display: none;
 }
@@ -156,26 +195,83 @@ body {
   scrollbar-width: none;
 }
 
-/* Mobile bottom nav safe area */
+/* ── Safe area ────────────────────────────────────────────── */
+
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Leaflet popup compact */
+/* ── Leaflet popup ────────────────────────────────────────── */
+
 .leaflet-popup-content {
-  margin: 8px 10px !important;
+  margin: 10px 12px !important;
   font-size: 14px !important;
-  line-height: 1.4 !important;
+  line-height: 1.5 !important;
 }
 .leaflet-popup-content-wrapper {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
 }
 
-/* Hide scrollbars for horizontal scrolling carousels */
+/* ── Hide scrollbars ──────────────────────────────────────── */
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ── Fade-in animation ────────────────────────────────────── */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
+.animate-fade-in-up-delay-1 {
+  animation: fadeInUp 0.5s ease-out 0.1s both;
+}
+.animate-fade-in-up-delay-2 {
+  animation: fadeInUp 0.5s ease-out 0.2s both;
+}
+
+/* ── Card hover ───────────────────────────────────────────── */
+
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 44, 30, 0.1);
+}
+.card-hover:active {
+  transform: scale(0.98);
+}
+
+/* ── Warm skeleton shimmer ────────────────────────────────── */
+
+@keyframes warm-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-warm {
+  background: linear-gradient(90deg, #FAEED9 25%, #FDF5E6 50%, #FAEED9 75%);
+  background-size: 200% 100%;
+  animation: warm-shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+/* ── Golden glow for Fresh Right Now ──────────────────────── */
+
+.golden-glow {
+  background: radial-gradient(ellipse at top, rgba(212, 168, 83, 0.15), transparent 70%);
 }

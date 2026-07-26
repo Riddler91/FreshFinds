@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { Search, Navigation, MapPin, Star, Clock, Leaf, X } from "lucide-react";
 
 /* ── Types ────────────────────────────────────────────────────── */
 interface Vendor {
@@ -99,10 +100,8 @@ export default function MapPage() {
       const L = (await import("leaflet")).default;
       await import("leaflet.markercluster");
 
-      // Store L for use in other effects
       leafletRef.current = L;
 
-      // Fix default icon paths
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -113,7 +112,7 @@ export default function MapPage() {
       const map = L.map(mapRef.current!, {
         center: [30.2672, -97.7431],
         zoom: 12,
-        zoomControl: false, // we'll add our own positioning
+        zoomControl: false,
       });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -121,7 +120,6 @@ export default function MapPage() {
         maxZoom: 19,
       }).addTo(map);
 
-      // Zoom control in top-right
       L.control.zoom({ position: "topright" }).addTo(map);
 
       mapInstance.current = map;
@@ -141,12 +139,10 @@ export default function MapPage() {
     const map = mapInstance.current;
     if (!map) return;
 
-    // Clear old markers
     if (markerGroup.current) {
       map.removeLayer(markerGroup.current);
     }
 
-    // Create fresh cluster group
     const mcg = L.markerClusterGroup({
       chunkedLoading: true,
       maxClusterRadius: 50,
@@ -158,18 +154,18 @@ export default function MapPage() {
 
     filteredVendors.forEach((vendor) => {
       const markerColor = vendor.hasFreshItems ? "fresh" : "stale";
+      const bounceClass = vendor.hasFreshItems ? " bouncing" : "";
 
       const icon = L.divIcon({
-        className: `vendor-marker ${markerColor}`,
+        className: `vendor-marker ${markerColor}${bounceClass}`,
         html: `<span>${vendor.categoryIcon}</span>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-        popupAnchor: [0, -22],
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+        popupAnchor: [0, -24],
       });
 
       const marker = L.marker([vendor.lat, vendor.lng], { icon });
 
-      // Tap/click handler → show bottom sheet
       marker.on("click", () => {
         if (userLoc) {
           const dist = haversineKm(userLoc, [vendor.lat, vendor.lng]);
@@ -194,7 +190,6 @@ export default function MapPage() {
         const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setUserLoc(loc);
 
-        // Remove old user marker
         if (userMarker.current) {
           mapInstance.current?.removeLayer(userMarker.current);
         }
@@ -203,16 +198,15 @@ export default function MapPage() {
         if (mapInstance.current && L) {
           const circleIcon = L.divIcon({
             className: "",
-            html: `<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 3px rgba(59,130,246,0.4);"></div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8],
+            html: `<div style="width:18px;height:18px;border-radius:50%;background:#C2765C;border:3px solid #FFFBF5;box-shadow:0 0 0 4px rgba(194,118,92,0.35);"></div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
           });
           userMarker.current = L.marker(loc, { icon: circleIcon }).addTo(mapInstance.current);
           mapInstance.current.flyTo(loc, 14, { duration: 1 });
         }
       },
       () => {
-        alert("📍 Could not access your location.\nShowing Austin, TX by default.");
         const defaultLoc: [number, number] = [30.2672, -97.7431];
         setUserLoc(defaultLoc);
         mapInstance.current?.flyTo(defaultLoc, 12, { duration: 1 });
@@ -221,7 +215,6 @@ export default function MapPage() {
     );
   }, []);
 
-  /* ── Map placeholder while loading ──────────────────────────── */
   const showSkeleton = isLoading && !mapReady;
 
   /* ── Render ─────────────────────────────────────────────────── */
@@ -232,18 +225,36 @@ export default function MapPage() {
         <div ref={mapRef} className="w-full h-full" />
       </div>
 
-      {/* ─── Top overlay: Search + Filters ──────────────────────── */}
+      {/* ─── Warm top gradient overlay ──────────────────────────── */}
+      <div className="absolute top-0 left-0 right-0 h-48 z-[5] pointer-events-none bg-gradient-to-b from-cream-50/90 via-cream-50/40 to-transparent" />
+
+      {/* ─── Top overlay: Header + Search + Filters ─────────────── */}
       <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
         <div className="pointer-events-auto">
-          {/* Search bar */}
+          {/* Logo + Location bar */}
           <div className="px-3 pt-3">
-            <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg border border-gray-200 flex items-center gap-2 px-3 py-2.5 max-w-md mx-auto">
-              <span className="text-gray-400 text-lg">🔍</span>
+            <div className="flex items-center justify-between max-w-md mx-auto mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-full bg-sage-100 flex items-center justify-center shadow-warm">
+                  <Leaf className="w-5 h-5 text-sage-600" strokeWidth={2} />
+                </div>
+                <span className="text-xl font-bold font-serif text-ink">FreshFinds</span>
+              </div>
+              <span className="text-xs text-ink-muted bg-cream-50/90 backdrop-blur px-2.5 py-1 rounded-full font-medium border border-cream-200/50 shadow-warm">
+                Austin, TX
+              </span>
+            </div>
+          </div>
+
+          {/* Search bar */}
+          <div className="px-3">
+            <div className="bg-card/95 backdrop-blur rounded-2xl shadow-warm border border-cream-200/60 flex items-center gap-2 px-3 py-2.5 max-w-md mx-auto">
+              <Search className="w-4 h-4 text-ink-muted" strokeWidth={2} />
               <input
                 type="text"
-                placeholder="Search food, vendors..."
-                className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
-                readOnly // placeholder — connects to search later
+                placeholder="Find sourdough, honey, fresh eggs..."
+                className="flex-1 bg-transparent text-sm text-ink placeholder-ink-muted/60 outline-none font-sans"
+                readOnly
               />
             </div>
           </div>
@@ -257,10 +268,10 @@ export default function MapPage() {
                   <button
                     key={cat.slug}
                     onClick={() => setActiveCategory(cat.slug)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    className={`flex-shrink-0 px-3.5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                       isActive
-                        ? "bg-fresh-500 text-white shadow-md"
-                        : "bg-white/90 text-gray-700 border border-gray-200 hover:bg-white"
+                        ? "bg-sage-500 text-white shadow-warm scale-105"
+                        : "bg-card/90 text-ink-light border border-cream-200/60 hover:bg-cream-100 shadow-warm"
                     }`}
                   >
                     {cat.icon} {cat.label}
@@ -272,17 +283,18 @@ export default function MapPage() {
 
           {/* Available Now toggle */}
           <div className="px-3 pb-2 flex justify-center">
-            <div className="bg-white/95 backdrop-blur rounded-full shadow border border-gray-200 flex items-center gap-2 px-3 py-1.5">
-              <span className="text-sm font-medium text-gray-700">🕐 Available Now</span>
+            <div className="bg-card/95 backdrop-blur rounded-full shadow-warm border border-cream-200/60 flex items-center gap-2.5 px-4 py-2">
+              <Clock className="w-4 h-4 text-sage-500" strokeWidth={2.5} />
+              <span className="text-sm font-semibold text-ink-light">Fresh Now</span>
               <button
                 onClick={() => setAvailableOnly(!availableOnly)}
-                className={`relative w-10 h-6 rounded-full transition-colors ${
-                  availableOnly ? "bg-fresh-500" : "bg-gray-300"
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                  availableOnly ? "bg-sage-500" : "bg-cream-300"
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    availableOnly ? "translate-x-4" : "translate-x-0"
+                  className={`absolute top-0.5 w-5 h-5 bg-card rounded-full shadow transition-transform duration-200 ${
+                    availableOnly ? "translate-x-5 left-0.5" : "left-0.5"
                   }`}
                 />
               </button>
@@ -291,28 +303,31 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* ─── Find Me button (bottom-right) ──────────────────────── */}
+      {/* ─── Find Me button ─────────────────────────────────────── */}
       <button
         onClick={handleFindMe}
         className="absolute bottom-24 right-4 z-10 find-me-btn"
         aria-label="Find my location"
       >
-        📍
+        <Navigation className="w-5 h-5 text-terra-500" strokeWidth={2.5} />
       </button>
 
       {/* ─── Floating stats badge ───────────────────────────────── */}
       <div className="absolute bottom-24 left-3 z-10 pointer-events-none">
-        <div className="bg-white/90 backdrop-blur rounded-lg shadow px-2.5 py-1.5 text-xs font-medium text-gray-600 pointer-events-auto">
-          {filteredVendors.length} vendor{filteredVendors.length !== 1 ? "s" : ""} found
+        <div className="bg-card/95 backdrop-blur rounded-2xl shadow-warm px-3 py-2 text-xs font-semibold text-ink-muted pointer-events-auto border border-cream-200/40 flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-sage-500" />
+          {filteredVendors.length} vendor{filteredVendors.length !== 1 ? "s" : ""}
         </div>
       </div>
 
       {/* ─── Loading skeleton ───────────────────────────────────── */}
       {showSkeleton && (
-        <div className="absolute inset-0 z-20 bg-gray-100 flex items-center justify-center">
+        <div className="absolute inset-0 z-20 bg-cream-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin text-4xl mb-2">🥬</div>
-            <p className="text-gray-500 text-sm">Loading the map...</p>
+            <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-cream-100 flex items-center justify-center">
+              <Leaf className="w-8 h-8 text-sage-400 animate-pulse" strokeWidth={1.5} />
+            </div>
+            <p className="text-ink-muted text-sm font-medium">Finding fresh food near you...</p>
           </div>
         </div>
       )}
@@ -328,34 +343,32 @@ export default function MapPage() {
           }}
         >
           <div className="bottom-sheet">
-            {/* Handle bar */}
             <div className="bottom-sheet-handle" />
 
-            {/* Content */}
-            <div className="p-4">
+            <div className="p-5">
               {/* Photo + header */}
-              <div className="flex gap-3 mb-3">
+              <div className="flex gap-3 mb-4">
                 {selectedVendor.photoUrl ? (
                   <img
                     src={selectedVendor.photoUrl}
                     alt={selectedVendor.businessName}
-                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                    className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 shadow-warm"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 text-2xl">
+                  <div className="w-16 h-16 rounded-2xl bg-cream-100 flex items-center justify-center flex-shrink-0 text-2xl shadow-warm">
                     {selectedVendor.categoryIcon}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900 truncate">
+                  <h2 className="text-lg font-bold font-serif text-ink truncate">
                     {selectedVendor.businessName}
                   </h2>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-yellow-500 text-sm">{"★".repeat(Math.round(selectedVendor.rating))}</span>
-                    <span className="text-sm font-medium text-gray-700">{selectedVendor.rating}</span>
-                    <span className="text-xs text-gray-400">({selectedVendor.reviewCount})</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Star className="w-3.5 h-3.5 text-honey-500 fill-honey-500" />
+                    <span className="text-sm font-semibold text-ink">{selectedVendor.rating}</span>
+                    <span className="text-xs text-ink-muted">({selectedVendor.reviewCount})</span>
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 mt-1 text-xs text-ink-muted">
                     <span>{selectedVendor.categoryIcon} {selectedVendor.categoryName}</span>
                     {selectedVendor.distance !== undefined && (
                       <span>• {selectedVendor.distance < 1 ? `${(selectedVendor.distance * 1000).toFixed(0)}m` : `${selectedVendor.distance.toFixed(1)}km`} away</span>
@@ -366,41 +379,42 @@ export default function MapPage() {
 
               {/* Fresh Now badge */}
               {selectedVendor.hasFreshItems && (
-                <div className="flex items-center gap-1.5 mb-3">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fresh-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-fresh-500" />
+                <div className="flex items-center gap-2 mb-3 bg-cream-50 rounded-2xl px-3 py-2 border border-cream-200/60">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-sage-500" />
                   </span>
-                  <span className="text-sm font-semibold text-fresh-600">
-                    {selectedVendor.listingCount} item{selectedVendor.listingCount !== 1 ? "s" : ""} fresh now
+                  <span className="text-sm font-bold text-sage-600 font-sans">
+                    {selectedVendor.listingCount} item{selectedVendor.listingCount !== 1 ? "s" : ""} fresh right now!
                   </span>
                 </div>
               )}
 
               {/* Bio */}
               {selectedVendor.bio && (
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{selectedVendor.bio}</p>
+                <p className="text-sm text-ink-light mb-3 line-clamp-2 leading-relaxed">{selectedVendor.bio}</p>
               )}
 
               {/* Address */}
-              <p className="text-xs text-gray-400 mb-4">📍 {selectedVendor.address}</p>
+              <p className="text-xs text-ink-muted mb-4 flex items-center gap-1">
+                <MapPin className="w-3 h-3" /> {selectedVendor.address}
+              </p>
 
               {/* View Vendor button */}
               <Link
                 href={`/vendor/${selectedVendor.id}`}
-                className="block w-full text-center bg-fresh-500 text-white font-semibold py-3 rounded-xl hover:bg-fresh-600 transition-colors"
+                className="block w-full text-center bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm active:scale-[0.98]"
               >
                 View Vendor →
               </Link>
 
-              {/* Dismiss hint */}
-              <p className="text-center text-xs text-gray-400 mt-2">Swipe down to dismiss</p>
+              <p className="text-center text-xs text-ink-muted mt-3">Swipe down to dismiss</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Bottom Nav spacer for safe area ────────────────────── */}
+      {/* ─── Bottom Nav spacer ──────────────────────────────────── */}
       <div className="safe-bottom" />
     </div>
   );

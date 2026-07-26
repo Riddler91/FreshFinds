@@ -1,8 +1,22 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import {
+  ArrowLeft,
+  Share2,
+  MapPin,
+  Star,
+  Clock,
+  MessageCircle,
+  Phone,
+  Globe,
+  BadgeCheck,
+  Leaf,
+  ChefHat,
+  Navigation,
+} from "lucide-react";
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface VendorProfile {
@@ -55,17 +69,18 @@ interface ReviewItem {
 }
 
 /* ── Constants ─────────────────────────────────────────────── */
-const FALLBACK_COVER = "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800&q=80";
+const FALLBACK_COVER = "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80";
+
 const DIETARY_COLORS: Record<string, string> = {
-  vegan: "bg-green-100 text-green-700",
-  vegetarian: "bg-green-100 text-green-700",
-  "gluten-free": "bg-amber-100 text-amber-700",
-  "dairy-free": "bg-blue-100 text-blue-700",
-  "nut-free": "bg-purple-100 text-purple-700",
-  keto: "bg-pink-100 text-pink-700",
-  organic: "bg-emerald-100 text-emerald-700",
+  vegan: "bg-sage-50 text-sage-700 border-sage-200/40",
+  vegetarian: "bg-sage-50 text-sage-700 border-sage-200/40",
+  "gluten-free": "bg-honey-50 text-honey-700 border-honey-200/40",
+  "dairy-free": "bg-cream-100 text-ink-light border-cream-300/40",
+  "nut-free": "bg-terra-50 text-terra-600 border-terra-200/40",
+  keto: "bg-sage-50 text-sage-700 border-sage-200/40",
+  organic: "bg-sage-100 text-sage-700 border-sage-200/40",
 };
-const DIETARY_DEFAULTS = "bg-amber-50 text-amber-700";
+const DIETARY_DEFAULTS = "bg-honey-50 text-honey-700 border-honey-200/40";
 
 /* ── Helpers ───────────────────────────────────────────────── */
 function timeAgo(dateStr: string): string {
@@ -114,7 +129,6 @@ export default function VendorProfilePage() {
   const [dietaryFilter, setDietaryFilter] = useState<string | null>(null);
   const [reviewFilter, setReviewFilter] = useState<number | null>(null);
 
-  // Mini-map refs
   const miniMapRef = useRef<HTMLDivElement>(null);
   const miniMapInstance = useRef<any>(null);
   const miniMapInitDone = useRef(false);
@@ -161,7 +175,15 @@ export default function VendorProfilePage() {
         maxZoom: 19,
       }).addTo(map);
 
-      L.marker([vendor.lat, vendor.lng]).addTo(map);
+      // Use a custom divIcon for the mini map
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:32px;height:32px;border-radius:50%;background:#C2765C;border:3px solid #FFFBF5;box-shadow:0 3px 10px rgba(61,44,30,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;">${vendor.categoryIcon}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+
+      L.marker([vendor.lat, vendor.lng], { icon }).addTo(map);
       miniMapInstance.current = map;
     };
 
@@ -198,14 +220,14 @@ export default function VendorProfilePage() {
   /* ── Loading skeleton ────────────────────────────────────── */
   if (loading) {
     return (
-      <div className="flex flex-col min-h-[100dvh] bg-gray-50">
+      <div className="flex flex-col min-h-[100dvh] bg-cream-50">
         <div className="animate-pulse">
-          <div className="aspect-[3/2] bg-gray-200" />
+          <div className="aspect-[3/2] bg-cream-200" />
           <div className="max-w-lg mx-auto w-full px-4 -mt-6 relative z-10">
-            <div className="bg-white rounded-2xl shadow-lg p-5">
-              <div className="h-6 bg-gray-200 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-gray-100 rounded w-3/4 mb-4" />
-              <div className="h-4 bg-gray-100 rounded w-full" />
+            <div className="bg-card rounded-3xl shadow-warm-lg p-5">
+              <div className="skeleton-warm h-6 w-1/2 mb-2" />
+              <div className="skeleton-warm h-4 w-3/4 mb-4" />
+              <div className="skeleton-warm h-4 w-full" />
             </div>
           </div>
         </div>
@@ -216,17 +238,19 @@ export default function VendorProfilePage() {
   /* ── Not found ───────────────────────────────────────────── */
   if (!vendor) {
     return (
-      <div className="flex flex-col min-h-[100dvh] bg-gray-50">
+      <div className="flex flex-col min-h-[100dvh] bg-cream-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center px-4">
-            <span className="text-6xl mb-4 block">🔍</span>
-            <p className="text-gray-600 text-lg font-medium">Vendor not found</p>
-            <p className="text-gray-400 text-sm mt-1">This vendor may have moved or no longer exists.</p>
+            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-cream-100 flex items-center justify-center">
+              <Leaf className="w-12 h-12 text-sage-400" strokeWidth={1} />
+            </div>
+            <p className="text-ink text-xl font-bold font-serif mb-2">Vendor not found</p>
+            <p className="text-ink-muted text-sm">This vendor may have moved or no longer exists.</p>
             <Link
               href="/"
-              className="mt-6 inline-flex items-center gap-2 bg-fresh-500 text-white font-semibold px-6 py-3 rounded-xl hover:bg-fresh-600 transition-colors"
+              className="mt-6 inline-flex items-center gap-2 bg-terra-500 text-white font-bold px-6 py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm"
             >
-              ← Back to Map
+              <ArrowLeft className="w-4 h-4" /> Back to Map
             </Link>
           </div>
         </div>
@@ -236,92 +260,103 @@ export default function VendorProfilePage() {
 
   /* ── Full profile ────────────────────────────────────────── */
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-gray-50">
+    <div className="flex flex-col min-h-[100dvh] bg-cream-50">
       {/* ─── Cover Photo ─────────────────────────────────────── */}
       <div className="relative">
-        <div className="aspect-[3/2] bg-gray-200 overflow-hidden">
+        <div className="aspect-[3/2] bg-cream-200 overflow-hidden">
           <img
             src={vendor.photoUrl || FALLBACK_COVER}
             alt={vendor.businessName}
             className="w-full h-full object-cover"
           />
         </div>
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        {/* Warm overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-cream-50" />
 
         {/* Back button */}
         <Link
           href="/"
-          className="absolute top-4 left-4 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-gray-700 hover:bg-white transition-colors"
+          className="absolute top-4 left-4 z-10 w-10 h-10 bg-card/90 backdrop-blur rounded-full flex items-center justify-center shadow-warm-lg text-ink hover:bg-card transition-colors"
         >
-          ←
+          <ArrowLeft className="w-5 h-5" />
         </Link>
 
         {/* Share button */}
         <button
-          className="absolute top-4 right-4 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-gray-700 hover:bg-white transition-colors"
+          className="absolute top-4 right-4 z-10 w-10 h-10 bg-card/90 backdrop-blur rounded-full flex items-center justify-center shadow-warm-lg text-ink hover:bg-card transition-colors"
           onClick={() => {
             if (navigator.share) {
               navigator.share({ title: vendor.businessName, url: window.location.href });
             }
           }}
         >
-          ↗
+          <Share2 className="w-5 h-5" />
         </button>
       </div>
 
       {/* ─── Info card (overlaps cover) ──────────────────────── */}
-      <div className="max-w-lg mx-auto w-full px-4 -mt-8 relative z-10">
-        <div className="bg-white rounded-2xl shadow-lg p-5">
+      <div className="max-w-lg mx-auto w-full px-4 -mt-10 relative z-10">
+        <div className="bg-card rounded-3xl shadow-warm-lg p-5 animate-fade-in-up">
           {/* Business name + badge */}
           <div className="flex items-start gap-2 mb-1">
-            <h1 className="text-xl font-bold text-gray-900 flex-1">
+            <h1 className="text-2xl font-bold font-serif text-ink flex-1">
               {vendor.businessName}
             </h1>
             {vendor.verified && (
-              <span className="flex-shrink-0 inline-flex items-center gap-1 bg-fresh-50 text-fresh-700 text-xs font-semibold px-2 py-1 rounded-full border border-fresh-200">
-                ✓ Verified Cottage Food
+              <span className="flex-shrink-0 inline-flex items-center gap-1 bg-sage-50 text-sage-700 text-xs font-bold px-2.5 py-1 rounded-full border border-sage-200">
+                <BadgeCheck className="w-3.5 h-3.5" /> Verified
               </span>
             )}
           </div>
 
           {/* Category + Rating */}
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full">
+            <span className="text-sm bg-cream-100 text-ink-light px-2.5 py-1 rounded-full font-semibold border border-cream-200/40">
               {vendor.categoryIcon} {vendor.categoryName}
             </span>
             <div className="flex items-center gap-1">
-              <span className="text-yellow-500 text-sm">{renderStars(vendor.rating)}</span>
-              <span className="text-sm font-semibold text-gray-800">{formatRating(vendor.rating)}</span>
-              <span className="text-xs text-gray-400">({vendor.reviewCount} reviews)</span>
+              <Star className="w-3.5 h-3.5 text-honey-500 fill-honey-500" />
+              <span className="text-sm font-bold text-ink">{formatRating(vendor.rating)}</span>
+              <span className="text-xs text-ink-muted">({vendor.reviewCount} reviews)</span>
             </div>
           </div>
 
-          {/* Address + distance */}
-          <p className="text-sm text-gray-500 mb-3">📍 {vendor.address}</p>
+          {/* Address */}
+          <p className="text-sm text-ink-muted mb-3 flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5" /> {vendor.address}
+          </p>
 
           {/* Bio */}
           {vendor.bio && (
-            <p className="text-sm text-gray-700 leading-relaxed mb-4">{vendor.bio}</p>
+            <p className="text-sm text-ink-light leading-relaxed mb-4">{vendor.bio}</p>
           )}
 
           {/* Quick stats */}
-          <div className="flex gap-4 py-3 border-t border-gray-100">
+          <div className="flex gap-4 py-3 border-t border-cream-200/60">
             <div className="text-center flex-1">
-              <p className="text-lg font-bold text-gray-900">{vendor.listingCount}</p>
-              <p className="text-xs text-gray-400">Active Listings</p>
+              <p className="text-xl font-bold font-serif text-ink">{vendor.listingCount}</p>
+              <p className="text-xs text-ink-muted font-medium">Active Listings</p>
             </div>
-            <div className="text-center flex-1 border-x border-gray-100">
-              <p className="text-lg font-bold text-gray-900">
-                {vendor.hasFreshItems ? "🟢" : "—"}
+            <div className="text-center flex-1 border-x border-cream-200/60">
+              <p className="text-xl font-bold text-ink">
+                {vendor.hasFreshItems ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sage-500" />
+                    </span>
+                    Yes
+                  </span>
+                ) : "—"}
               </p>
-              <p className="text-xs text-gray-400">Fresh Now</p>
+              <p className="text-xs text-ink-muted font-medium">Fresh Now</p>
             </div>
             <div className="text-center flex-1">
-              <p className="text-lg font-bold text-gray-900">
+              <p className="text-lg font-bold font-serif text-ink">
                 {memberSince(vendor.createdAt)}
               </p>
-              <p className="text-xs text-gray-400">Member Since</p>
+              <p className="text-xs text-ink-muted font-medium">Member Since</p>
             </div>
           </div>
         </div>
@@ -332,67 +367,71 @@ export default function VendorProfilePage() {
         {/* ─── FRESH RIGHT NOW ──────────────────────────────────── */}
         <section className="mt-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-lg font-bold font-serif text-ink flex items-center gap-2">
               <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fresh-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-fresh-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-sage-500" />
               </span>
               Fresh Right Now
             </h2>
             {freshListings.length > 0 && (
-              <span className="text-xs text-fresh-600 bg-fresh-50 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs font-bold text-sage-600 bg-sage-50 px-2.5 py-1 rounded-full border border-sage-200/40">
                 {freshListings.length} available
               </span>
             )}
           </div>
 
           {freshListings.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-              <span className="text-3xl">🥬</span>
-              <p className="text-gray-500 mt-2 font-medium">Nothing fresh right now</p>
-              <p className="text-gray-400 text-sm mt-1">Check back soon — this vendor updates their availability daily!</p>
+            <div className="bg-card rounded-3xl border border-cream-200/40 p-8 text-center shadow-warm">
+              <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-cream-100 flex items-center justify-center">
+                <Clock className="w-8 h-8 text-ink-muted" strokeWidth={1.5} />
+              </div>
+              <p className="text-ink-light font-bold font-serif mb-1">Nothing fresh right now</p>
+              <p className="text-ink-muted text-sm">Check back soon — this vendor updates their availability daily!</p>
             </div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
               {freshListings.map((item) => (
                 <div
                   key={item.id}
-                  className="flex-shrink-0 w-64 snap-start bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                  className="flex-shrink-0 w-64 snap-start bg-card rounded-3xl shadow-warm border border-cream-200/40 overflow-hidden card-hover"
                 >
-                  <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+                  <div className="aspect-[4/3] bg-cream-100 overflow-hidden relative">
                     <img
                       src={item.photoUrl || FALLBACK_COVER}
                       alt={item.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
+                    <div className="absolute top-2 left-2 bg-sage-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-warm">
+                      Fresh
+                    </div>
                   </div>
                   <div className="p-3">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                      <h3 className="font-bold text-sm text-ink font-serif line-clamp-1">
                         {item.title}
                       </h3>
                       {item.price !== null && (
-                        <span className="text-fresh-700 font-bold text-sm whitespace-nowrap">
+                        <span className="text-sage-600 font-bold text-sm whitespace-nowrap bg-sage-50 px-2 py-0.5 rounded-lg">
                           ${item.price.toFixed(2)}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs text-gray-400">
-                        🕐 {item.createdAt ? timeAgo(item.createdAt) : "Recently"}
+                      <span className="text-xs text-ink-muted">
+                        {item.createdAt ? timeAgo(item.createdAt) : "Recently"}
                       </span>
                       {item.quantity !== undefined && item.quantity !== null && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-ink-muted">
                           • {item.quantity} left
                         </span>
                       )}
                     </div>
-                    {/* Dietary tags */}
                     {item.dietaryTags && parseDietaryTags(item.dietaryTags).length > 0 && (
                       <div className="flex gap-1 mt-2 flex-wrap">
                         {parseDietaryTags(item.dietaryTags).slice(0, 2).map((tag) => (
-                          <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full ${DIETARY_COLORS[tag] || DIETARY_DEFAULTS}`}>
+                          <span key={tag} className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${DIETARY_COLORS[tag] || DIETARY_DEFAULTS}`}>
                             {tag}
                           </span>
                         ))}
@@ -407,28 +446,28 @@ export default function VendorProfilePage() {
 
         {/* ─── ALL LISTINGS ─────────────────────────────────────── */}
         <section className="mt-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">
-            📋 All Listings ({listings.length})
+          <h2 className="text-lg font-bold font-serif text-ink mb-3">
+            All Listings ({listings.length})
           </h2>
 
           {/* Filter tabs */}
           <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide">
             <button
               onClick={() => { setFilterTab("all"); setDietaryFilter(null); }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 ${
                 filterTab === "all" && !dietaryFilter
-                  ? "bg-fresh-500 text-white"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  ? "bg-sage-500 text-white shadow-warm"
+                  : "bg-card text-ink-light border border-cream-200/60 hover:bg-cream-100"
               }`}
             >
               All
             </button>
             <button
               onClick={() => { setFilterTab("fresh"); setDietaryFilter(null); }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 ${
                 filterTab === "fresh"
-                  ? "bg-fresh-500 text-white"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  ? "bg-sage-500 text-white shadow-warm"
+                  : "bg-card text-ink-light border border-cream-200/60 hover:bg-cream-100"
               }`}
             >
               Available Now
@@ -440,10 +479,10 @@ export default function VendorProfilePage() {
                   setDietaryFilter(dietaryFilter === tag ? null : tag);
                   setFilterTab("all");
                 }}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 ${
                   dietaryFilter === tag
-                    ? "bg-amber-500 text-white"
-                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-honey-500 text-white shadow-warm"
+                    : "bg-card text-ink-light border border-cream-200/60 hover:bg-cream-100"
                 }`}
               >
                 {tag}
@@ -454,45 +493,44 @@ export default function VendorProfilePage() {
           {/* Listing cards */}
           <div className="space-y-3">
             {filteredListings.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-                <span className="text-2xl">📭</span>
-                <p className="text-gray-500 mt-2 text-sm">No listings match this filter.</p>
+              <div className="bg-card rounded-3xl border border-cream-200/40 p-8 text-center shadow-warm">
+                <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-cream-100 flex items-center justify-center">
+                  <ChefHat className="w-7 h-7 text-ink-muted" strokeWidth={1.5} />
+                </div>
+                <p className="text-ink-light font-medium text-sm">No listings match this filter.</p>
               </div>
             ) : (
               filteredListings.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                  className="bg-card rounded-3xl shadow-warm border border-cream-200/40 overflow-hidden card-hover"
                 >
                   <div className="flex">
-                    {item.photoUrl && (
-                      <div className="w-28 h-28 flex-shrink-0 bg-gray-100">
-                        <img
-                          src={item.photoUrl}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
+                    <div className="w-28 h-28 flex-shrink-0 bg-cream-100">
+                      <img
+                        src={item.photoUrl || FALLBACK_COVER}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
                     <div className="p-3 flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                        <h3 className="font-bold text-sm text-ink font-serif line-clamp-1">
                           {item.title}
                         </h3>
                         {item.price !== null && (
-                          <span className="text-fresh-700 font-bold text-sm whitespace-nowrap">
+                          <span className="text-sage-600 font-bold text-sm whitespace-nowrap bg-sage-50 px-2 py-0.5 rounded-lg">
                             ${item.price.toFixed(2)}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                      <p className="text-xs text-ink-muted mt-1 line-clamp-2 leading-relaxed">
                         {item.description}
                       </p>
 
-                      {/* Pickup window */}
-                      <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
-                        <span>📅</span>
+                      <div className="mt-2 flex items-center gap-1 text-xs text-ink-muted">
+                        <Clock className="w-3 h-3" />
                         <span>
                           {new Date(item.pickupWindowStart).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                           {" • "}
@@ -502,27 +540,24 @@ export default function VendorProfilePage() {
                         </span>
                       </div>
 
-                      {/* Dietary tags */}
                       {item.dietaryTags && parseDietaryTags(item.dietaryTags).length > 0 && (
                         <div className="flex gap-1 mt-2 flex-wrap">
                           {parseDietaryTags(item.dietaryTags).map((tag) => (
-                            <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full ${DIETARY_COLORS[tag] || DIETARY_DEFAULTS}`}>
+                            <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full font-semibold border ${DIETARY_COLORS[tag] || DIETARY_DEFAULTS}`}>
                               {tag}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      {/* Ingredients preview */}
                       {item.ingredients && (
-                        <p className="mt-2 text-xs text-gray-400 truncate">
-                          <span className="font-medium">Ingredients:</span> {item.ingredients}
+                        <p className="mt-2 text-xs text-ink-muted truncate">
+                          <span className="font-semibold">Ingredients:</span> {item.ingredients}
                         </p>
                       )}
 
-                      {/* Allergens */}
                       {item.allergenWarning && (
-                        <p className="mt-1 text-xs text-red-500 font-medium">
+                        <p className="mt-1 text-xs text-terra-600 font-semibold">
                           ⚠️ {item.allergenWarning}
                         </p>
                       )}
@@ -536,43 +571,48 @@ export default function VendorProfilePage() {
 
         {/* ─── REVIEWS ──────────────────────────────────────────── */}
         <section className="mt-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">
-            ⭐ Reviews ({reviews.length})
+          <h2 className="text-lg font-bold font-serif text-ink mb-3">
+            Reviews ({reviews.length})
           </h2>
 
           {reviews.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-              <span className="text-3xl">💬</span>
-              <p className="text-gray-500 mt-2 font-medium">No reviews yet</p>
-              <p className="text-gray-400 text-sm mt-1">Be the first to review this vendor!</p>
+            <div className="bg-card rounded-3xl border border-cream-200/40 p-8 text-center shadow-warm">
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-cream-100 flex items-center justify-center">
+                <MessageCircle className="w-7 h-7 text-ink-muted" strokeWidth={1.5} />
+              </div>
+              <p className="text-ink-light font-bold font-serif mb-1">No reviews yet</p>
+              <p className="text-ink-muted text-sm">Be the first to review this vendor!</p>
             </div>
           ) : (
             <>
               {/* Rating summary */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-3">
+              <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-5 mb-3">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl font-bold text-gray-900">{formatRating(vendor.rating)}</span>
+                  <span className="text-4xl font-bold font-serif text-ink">{formatRating(vendor.rating)}</span>
                   <div>
-                    <div className="text-yellow-500 text-sm">{renderStars(vendor.rating)}</div>
-                    <p className="text-xs text-gray-400">{vendor.reviewCount} review{vendor.reviewCount !== 1 ? "s" : ""}</p>
+                    <div className="flex items-center gap-0.5 text-honey-500">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} className={`w-4 h-4 ${s <= Math.round(vendor.rating) ? "fill-honey-500" : ""}`} />
+                      ))}
+                    </div>
+                    <p className="text-xs text-ink-muted mt-0.5">{vendor.reviewCount} review{vendor.reviewCount !== 1 ? "s" : ""}</p>
                   </div>
                 </div>
-                {/* Distribution bars */}
                 <div className="space-y-1.5">
                   {starDist.map(({ star, count, pct }) => (
                     <button
                       key={star}
                       onClick={() => setReviewFilter(reviewFilter === star ? null : star)}
-                      className={`w-full flex items-center gap-2 text-xs ${reviewFilter === star ? "opacity-100" : "opacity-70 hover:opacity-100"}`}
+                      className={`w-full flex items-center gap-2 text-xs ${reviewFilter === star ? "opacity-100" : "opacity-70 hover:opacity-100"} transition-opacity`}
                     >
-                      <span className="w-3 text-gray-500">{star}</span>
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <span className="w-3 text-ink-muted font-semibold">{star}</span>
+                      <div className="flex-1 h-2 bg-cream-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-yellow-400 rounded-full transition-all"
-                          style={{ width: `${Math.max(pct, 2)}%` }}
+                          className="h-full bg-honey-400 rounded-full transition-all"
+                          style={{ width: `${Math.max(pct, 3)}%` }}
                         />
                       </div>
-                      <span className="w-6 text-right text-gray-400">{count}</span>
+                      <span className="w-6 text-right text-ink-muted font-medium">{count}</span>
                     </button>
                   ))}
                 </div>
@@ -581,21 +621,23 @@ export default function VendorProfilePage() {
               {/* Review cards */}
               <div className="space-y-3">
                 {filteredReviews.map((review) => (
-                  <div key={review.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                  <div key={review.id} className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-4 card-hover">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-fresh-100 text-fresh-600 flex items-center justify-center text-sm font-bold">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-full bg-sage-100 text-sage-600 flex items-center justify-center text-sm font-bold font-serif border border-sage-200/40">
                           {review.userName.charAt(0)}
                         </div>
-                        <span className="font-medium text-sm text-gray-900">{review.userName}</span>
+                        <span className="font-bold text-sm text-ink">{review.userName}</span>
                       </div>
-                      <span className="text-xs text-gray-400">{timeAgo(review.createdAt)}</span>
+                      <span className="text-xs text-ink-muted">{timeAgo(review.createdAt)}</span>
                     </div>
-                    <div className="text-yellow-500 text-xs mb-1">
-                      {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                    <div className="flex items-center gap-0.5 mb-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? "text-honey-500 fill-honey-500" : "text-cream-300"}`} />
+                      ))}
                     </div>
                     {review.comment && (
-                      <p className="text-sm text-gray-700 leading-relaxed">{review.comment}</p>
+                      <p className="text-sm text-ink-light leading-relaxed">{review.comment}</p>
                     )}
                   </div>
                 ))}
@@ -606,35 +648,42 @@ export default function VendorProfilePage() {
 
         {/* ─── PICKUP INFO ──────────────────────────────────────── */}
         <section className="mt-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">
-            📍 Pickup Info
+          <h2 className="text-lg font-bold font-serif text-ink mb-3">
+            Pickup Info
           </h2>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Mini map */}
+          <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 overflow-hidden">
             <div
               ref={miniMapRef}
-              className="w-full h-40 bg-gray-100 cursor-pointer"
+              className="w-full h-40 bg-cream-100 cursor-pointer relative group"
               onClick={() => {
                 window.open(
                   `https://www.google.com/maps/dir/?api=1&destination=${vendor.lat},${vendor.lng}`,
                   "_blank"
                 );
               }}
-            />
+            >
+              <div className="absolute inset-0 flex items-center justify-center bg-ink/0 group-hover:bg-ink/5 transition-colors z-10">
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-card/90 backdrop-blur rounded-full px-4 py-2 text-sm font-bold text-ink shadow-warm">
+                  Open in Maps →
+                </span>
+              </div>
+            </div>
 
             <div className="p-4">
-              <p className="text-sm font-medium text-gray-900">{vendor.address}</p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-sm font-bold text-ink flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-terra-500" /> {vendor.address}
+              </p>
+              <p className="text-xs text-ink-muted mt-1">
                 Pickup hours: contact vendor for availability
               </p>
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${vendor.lat},${vendor.lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-fresh-600 hover:text-fresh-700 transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-terra-500 hover:text-terra-400 transition-colors"
               >
-                Get Directions →
+                <Navigation className="w-3.5 h-3.5" /> Get Directions
               </a>
             </div>
           </div>
@@ -642,25 +691,25 @@ export default function VendorProfilePage() {
 
         {/* ─── CONTACT ─────────────────────────────────────────── */}
         <section className="mt-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">
-            💬 Contact
+          <h2 className="text-lg font-bold font-serif text-ink mb-3">
+            Contact
           </h2>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-3">
+          <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-5 space-y-3">
             <button
-              className="w-full bg-fresh-500 text-white font-semibold py-3 rounded-xl hover:bg-fresh-600 transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm flex items-center justify-center gap-2 active:scale-[0.98]"
               onClick={() => alert("📬 Messaging coming soon! You'll be able to message vendors directly.")}
             >
-              💬 Message Vendor
+              <MessageCircle className="w-5 h-5" /> Message Vendor
             </button>
 
             {vendor.phone && (
               <a
                 href={`tel:${vendor.phone}`}
-                className="flex items-center gap-3 py-2 text-sm text-gray-700 hover:text-fresh-600 transition-colors"
+                className="flex items-center gap-3 py-2.5 px-3 text-sm text-ink-light hover:text-terra-500 transition-colors rounded-2xl hover:bg-cream-50"
               >
-                <span className="text-lg">📞</span>
-                <span>{vendor.phone}</span>
+                <Phone className="w-4 h-4 text-sage-500" />
+                <span className="font-medium">{vendor.phone}</span>
               </a>
             )}
 
@@ -669,22 +718,22 @@ export default function VendorProfilePage() {
                 href={vendor.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 py-2 text-sm text-gray-700 hover:text-fresh-600 transition-colors"
+                className="flex items-center gap-3 py-2.5 px-3 text-sm text-ink-light hover:text-terra-500 transition-colors rounded-2xl hover:bg-cream-50"
               >
-                <span className="text-lg">🌐</span>
-                <span className="truncate">{vendor.website.replace(/^https?:\/\//, "")}</span>
+                <Globe className="w-4 h-4 text-sage-500" />
+                <span className="font-medium truncate">{vendor.website.replace(/^https?:\/\//, "")}</span>
               </a>
             )}
 
             {vendor.socialLinks && (
-              <div className="flex items-center gap-3 py-2 text-sm text-gray-700">
-                <span className="text-lg">📱</span>
-                <span className="truncate">{vendor.socialLinks}</span>
+              <div className="flex items-center gap-3 py-2.5 px-3 text-sm text-ink-light">
+                <Share2 className="w-4 h-4 text-sage-500" />
+                <span className="font-medium truncate">{vendor.socialLinks}</span>
               </div>
             )}
 
             {!vendor.phone && !vendor.website && !vendor.socialLinks && (
-              <p className="text-sm text-gray-400 text-center py-2">
+              <p className="text-sm text-ink-muted text-center py-2">
                 Contact info not provided — use the message button above!
               </p>
             )}
