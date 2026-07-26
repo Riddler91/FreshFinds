@@ -19,6 +19,7 @@ export const vendors = sqliteTable("vendors", {
   socialLinks: text("social_links"),
   state: text("state").notNull().default("TX"),
   city: text("city").notNull().default("Austin"),
+  acceptsMessages: integer("accepts_messages", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

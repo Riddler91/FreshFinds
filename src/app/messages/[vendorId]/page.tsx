@@ -166,9 +166,9 @@ export default function MessagesPage() {
             <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center mb-4">
               <MessageCircle className="w-8 h-8 text-ink-muted" strokeWidth={1.5} />
             </div>
-            <p className="text-ink-light font-bold font-serif text-lg mb-1">Start a conversation</p>
+            <p className="text-ink-light font-bold font-serif text-lg mb-1">Send a message</p>
             <p className="text-ink-muted text-sm max-w-xs">
-              Ask about pickup times, availability, ingredients, or custom orders!
+              Send a message to {vendor?.businessName || "this vendor"} to ask about their products, pickup times, or custom orders.
             </p>
           </div>
         ) : (

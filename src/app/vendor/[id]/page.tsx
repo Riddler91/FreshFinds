@@ -33,6 +33,7 @@ interface VendorProfile {
   bio: string | null;
   photoUrl: string | null;
   verified: boolean;
+  acceptsMessages: boolean;
   categoryName: string;
   categorySlug: string;
   categoryIcon: string;
@@ -696,12 +697,18 @@ export default function VendorProfilePage() {
           </h2>
 
           <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-5 space-y-3">
-            <Link
-              href={`/messages/${vendor.id}`}
-              className="w-full bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm flex items-center justify-center gap-2 active:scale-[0.98]"
-            >
-              <MessageCircle className="w-5 h-5" /> Message Vendor
-            </Link>
+            {vendor.acceptsMessages ? (
+              <Link
+                href={`/messages/${vendor.id}`}
+                className="w-full bg-terra-500 text-white font-bold py-3.5 rounded-2xl hover:bg-terra-400 transition-all shadow-warm flex items-center justify-center gap-2 active:scale-[0.98]"
+              >
+                <MessageCircle className="w-5 h-5" /> Message Vendor
+              </Link>
+            ) : (
+              <div className="w-full bg-cream-100 text-ink-muted font-medium py-3.5 rounded-2xl flex items-center justify-center gap-2 text-sm">
+                <MessageCircle className="w-4 h-4" /> This vendor hasn&apos;t enabled messaging yet
+              </div>
+            )}
 
             {vendor.phone && (
               <a

@@ -30,6 +30,7 @@ interface FormData {
   homeKitchenAck: boolean;
   allowedFoodsAck: boolean;
   labelingAck: boolean;
+  acceptsMessages: boolean;
   itemName: string;
   itemCategory: string;
   itemDescription: string;
@@ -109,7 +110,7 @@ function getEmptyForm(): FormData {
     lat: 30.2672, lng: -97.7431, phone: "", email: "", website: "",
     bio: "", photoUrl: "", state: "TX",
     complianceChecked: false, homeKitchenAck: false,
-    allowedFoodsAck: false, labelingAck: false,
+    allowedFoodsAck: false, labelingAck: false, acceptsMessages: false,
     itemName: "", itemCategory: "", itemDescription: "",
     price: "", quantity: "", itemPhotoUrl: "", dietaryTags: [],
     pickupStart: "", pickupEnd: "", ingredients: "", allergenWarning: "",
@@ -190,6 +191,7 @@ export default function OnboardingPage() {
           categoryName: cat.name, categorySlug: cat.slug,
           categoryIcon: cat.icon, website: form.website,
           state: form.state, city: form.address?.split(",")[0]?.trim() || "",
+          acceptsMessages: form.acceptsMessages,
         }),
       });
 
@@ -533,6 +535,24 @@ export default function OnboardingPage() {
                     />
                   </div>
                 )}
+              </div>
+
+              {/* Messaging Opt-In */}
+              <div>
+                <label className="flex items-start gap-3 cursor-pointer p-4 bg-cream-50 rounded-2xl border border-cream-200/60">
+                  <input
+                    type="checkbox"
+                    checked={form.acceptsMessages}
+                    onChange={(e) => update({ acceptsMessages: e.target.checked })}
+                    className="mt-0.5 w-5 h-5 text-sage-500 rounded-lg border-cream-300 focus:ring-sage-400 flex-shrink-0"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-ink">I want customers to be able to message me</span>
+                    <p className="text-xs text-ink-muted mt-1">
+                      Customers can ask about products, availability, and pickup. You can disable this anytime.
+                    </p>
+                  </div>
+                </label>
               </div>
 
               {/* Compliance Checklist */}

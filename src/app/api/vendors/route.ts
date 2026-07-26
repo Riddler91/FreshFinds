@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
         bio: vendor.bio,
         photoUrl: vendor.photo_url,
         verified: !!vendor.verified,
+        acceptsMessages: !!vendor.accepts_messages,
         categoryName: vendor.category_name,
         categorySlug: vendor.category_slug,
         categoryIcon: vendor.category_icon,
@@ -105,6 +106,7 @@ export async function GET(request: NextRequest) {
     return {
       id: v.id,
       businessName: v.business_name,
+      acceptsMessages: !!v.accepts_messages,
       lat: v.lat,
       lng: v.lng,
       address: v.address,
@@ -164,8 +166,8 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString();
 
   const result = db.prepare(
-    `INSERT INTO vendors (name, business_name, email, phone, address, lat, lng, bio, photo_url, verified, category_name, category_slug, category_icon, website, social_links, state, city, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO vendors (name, business_name, email, phone, address, lat, lng, bio, photo_url, verified, category_name, category_slug, category_icon, website, social_links, state, city, accepts_messages, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     body.name || "",
     body.businessName || "",
@@ -183,6 +185,7 @@ export async function POST(request: NextRequest) {
     body.socialLinks || "",
     body.state || "TX",
     body.city || "Austin",
+    body.acceptsMessages ? 1 : 0,
     now
   );
 
@@ -198,6 +201,7 @@ export async function POST(request: NextRequest) {
     bio: body.bio || "",
     photoUrl: body.photoUrl || "",
     verified: false,
+    acceptsMessages: !!body.acceptsMessages,
     categoryName: body.categoryName || "Other",
     categorySlug: body.categorySlug || "other",
     categoryIcon: body.categoryIcon || "📦",

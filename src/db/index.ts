@@ -56,6 +56,7 @@ function ensureTables(sqlite: Database.Database) {
       social_links TEXT,
       state TEXT NOT NULL DEFAULT 'TX',
       city TEXT NOT NULL DEFAULT 'Austin',
+      accepts_messages INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     );
 

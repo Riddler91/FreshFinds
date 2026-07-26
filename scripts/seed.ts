@@ -40,6 +40,7 @@ function createTables() {
       social_links TEXT,
       state TEXT NOT NULL DEFAULT 'TX',
       city TEXT NOT NULL DEFAULT 'Austin',
+      accepts_messages INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     );
 
@@ -134,8 +135,8 @@ function seed() {
   // Seed vendors from MOCK_VENDORS
   console.log(`👩‍🌾 Seeding ${MOCK_VENDORS.length} vendors...`);
   const insertVendor = sqlite.prepare(
-    `INSERT INTO vendors (id, name, business_name, email, phone, address, lat, lng, bio, photo_url, verified, category_name, category_slug, category_icon, state, city, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO vendors (id, name, business_name, email, phone, address, lat, lng, bio, photo_url, verified, category_name, category_slug, category_icon, state, city, accepts_messages, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const insertManyVendors = sqlite.transaction((vendors: any[]) => {
     for (const v of vendors) {
@@ -143,7 +144,8 @@ function seed() {
         v.id, v.name || "", v.businessName, v.email || `vendor${v.id}@example.com`,
         v.phone || null, v.address, v.lat, v.lng, v.bio || null, v.photoUrl || null,
         v.verified ? 1 : 0, v.categoryName || "Other", v.categorySlug || "other",
-        v.categoryIcon || "📦", v.state || "TX", v.city || "Austin", NOW
+        v.categoryIcon || "📦", v.state || "TX", v.city || "Austin",
+        v.acceptsMessages ? 1 : 0, NOW
       );
     }
   });
