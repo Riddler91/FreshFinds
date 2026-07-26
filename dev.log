@@ -1,0 +1,154 @@
+nohup: ignoring input
+$ next dev -p 3000 -H 0.0.0.0
+   ▲ Next.js 15.5.22
+   - Local:        http://localhost:3000
+   - Network:      http://0.0.0.0:3000
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 1384ms
+ ○ Compiling / ...
+ ✓ Compiled / in 5.3s (611 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 5741ms
+ ○ Compiling /api/listings ...
+ ✓ Compiled /api/listings in 1137ms (619 modules)
+ ⨯ Error: Cannot find module 'bun:sqlite'
+Require stack:
+- /work/freshfinds/.next/server/app/api/listings/route.js
+- /work/freshfinds/node_modules/next/dist/server/require.js
+- /work/freshfinds/node_modules/next/dist/server/load-components.js
+- /work/freshfinds/node_modules/next/dist/build/utils.js
+- /work/freshfinds/node_modules/next/dist/build/swc/options.js
+- /work/freshfinds/node_modules/next/dist/build/swc/index.js
+- /work/freshfinds/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /work/freshfinds/node_modules/next/dist/server/config.js
+- /work/freshfinds/node_modules/next/dist/server/next.js
+- /work/freshfinds/node_modules/next/dist/server/lib/start-server.js
+    at bun:sqlite (.next/server/app/api/listings/route.js:108:18)
+    at eval (webpack-internal:///(rsc)/./src/app/api/listings/route.ts:6:68)
+    at <unknown> (rsc)/./src/app/api/listings/route.ts (/work/freshfinds/.next/server/app/api/listings/route.js:43:1)
+    at __webpack_exec__ (.next/server/app/api/listings/route.js:184:39)
+    at <unknown> (.next/server/app/api/listings/route.js:185:83)
+    at <unknown> (.next/server/app/api/listings/route.js:185:47)
+    at Object.<anonymous> (.next/server/app/api/listings/route.js:188:3) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/api/listings'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1797ms (966 modules)
+ GET /api/listings 500 in 3615ms
+ ○ Compiling /api/vendors ...
+ ✓ Compiled /api/vendors in 1266ms (968 modules)
+ ⨯ Error: Cannot find module 'bun:sqlite'
+Require stack:
+- /work/freshfinds/.next/server/app/api/vendors/route.js
+- /work/freshfinds/node_modules/next/dist/server/require.js
+- /work/freshfinds/node_modules/next/dist/server/load-components.js
+- /work/freshfinds/node_modules/next/dist/build/utils.js
+- /work/freshfinds/node_modules/next/dist/build/swc/options.js
+- /work/freshfinds/node_modules/next/dist/build/swc/index.js
+- /work/freshfinds/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /work/freshfinds/node_modules/next/dist/server/config.js
+- /work/freshfinds/node_modules/next/dist/server/next.js
+- /work/freshfinds/node_modules/next/dist/server/lib/start-server.js
+    at bun:sqlite (.next/server/app/api/vendors/route.js:108:18)
+    at eval (webpack-internal:///(rsc)/./src/app/api/vendors/route.ts:6:68)
+    at <unknown> (rsc)/./src/app/api/vendors/route.ts (/work/freshfinds/.next/server/app/api/vendors/route.js:43:1)
+    at __webpack_exec__ (.next/server/app/api/vendors/route.js:184:39)
+    at <unknown> (.next/server/app/api/vendors/route.js:185:83)
+    at <unknown> (.next/server/app/api/vendors/route.js:185:47)
+    at Object.<anonymous> (.next/server/app/api/vendors/route.js:188:3) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/api/vendors'
+}
+ GET /api/vendors 500 in 1606ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 199ms
+ ⨯ Error: Cannot find module 'bun:sqlite'
+Require stack:
+- /work/freshfinds/.next/server/app/api/listings/route.js
+- /work/freshfinds/node_modules/next/dist/server/require.js
+- /work/freshfinds/node_modules/next/dist/server/load-components.js
+- /work/freshfinds/node_modules/next/dist/build/utils.js
+- /work/freshfinds/node_modules/next/dist/build/swc/options.js
+- /work/freshfinds/node_modules/next/dist/build/swc/index.js
+- /work/freshfinds/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /work/freshfinds/node_modules/next/dist/server/config.js
+- /work/freshfinds/node_modules/next/dist/server/next.js
+- /work/freshfinds/node_modules/next/dist/server/lib/start-server.js
+    at bun:sqlite (.next/server/app/api/listings/route.js:108:18)
+    at eval (webpack-internal:///(rsc)/./src/app/api/listings/route.ts:6:68)
+    at <unknown> (rsc)/./src/app/api/listings/route.ts (/work/freshfinds/.next/server/app/api/listings/route.js:43:1)
+    at __webpack_exec__ (.next/server/app/api/listings/route.js:184:39)
+    at <unknown> (.next/server/app/api/listings/route.js:185:83)
+    at <unknown> (.next/server/app/api/listings/route.js:185:47)
+    at Object.<anonymous> (.next/server/app/api/listings/route.js:188:3) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/api/listings'
+}
+ GET /api/listings 500 in 256ms
+ ✓ Compiled in 546ms (980 modules)
+ GET /api/listings 200 in 64ms
+ GET /api/vendors 200 in 102ms
+ ○ Compiling /feed ...
+ ✓ Compiled /feed in 1012ms (981 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /feed. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /feed. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /feed 200 in 1210ms
+ ✓ Compiled /vendor/[id] in 348ms (974 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /vendor/[id]. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /vendor/[id]. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /vendor/1 200 in 1066ms
+ ✓ Compiled /onboarding in 309ms (981 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /onboarding. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /onboarding. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /onboarding 200 in 444ms
+ ✓ Compiled / in 307ms (504 modules)
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 686ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /feed. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /feed. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /feed 200 in 57ms
+ GET /api/listings 200 in 18ms
+ GET /api/vendors 200 in 10ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /vendor/[id]. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /vendor/[id]. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /vendor/1 200 in 82ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 55ms
+ GET /api/listings 200 in 7ms
+ ⚠ Unsupported metadata viewport is configured in metadata export in /feed. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /feed. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET /feed 200 in 40ms
