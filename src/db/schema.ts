@@ -73,3 +73,11 @@ export const messages = sqliteTable("messages", {
   sender: text("sender").notNull().default("consumer"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
+
+export const pageViews = sqliteTable("page_views", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  path: text("path").notNull(),
+  city: text("city"),
+  sessionId: text("session_id").notNull(),
+  timestamp: text("timestamp").notNull().$defaultFn(() => new Date().toISOString()),
+});

@@ -60,6 +60,33 @@ export default function RootLayout({
       <body className="min-h-screen bg-cream-50 text-ink antialiased font-sans overscroll-none">
         <main className="relative">{children}</main>
         <BottomNav />
+        {/* Privacy-respecting analytics — no third-party scripts */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  try {
+    var sessionId = localStorage.getItem('ff_sid');
+    if (!sessionId) {
+      sessionId = 's' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+      localStorage.setItem('ff_sid', sessionId);
+    }
+    var city = localStorage.getItem('ff-selected-city') || '';
+    fetch('/api/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: window.location.pathname,
+        city: city,
+        sessionId: sessionId
+      }),
+      keepalive: true
+    }).catch(function(){});
+  } catch(e) {}
+})();
+`,
+          }}
+        />
       </body>
     </html>
   );

@@ -110,5 +110,13 @@ function ensureTables(sqlite: Database.Database) {
       sender TEXT NOT NULL DEFAULT 'consumer',
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS page_views (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      path TEXT NOT NULL,
+      city TEXT,
+      session_id TEXT NOT NULL,
+      timestamp TEXT NOT NULL
+    );
   `);
 }
