@@ -105,6 +105,25 @@ export default function OnboardingPage() {
   useEffect(() => { setForm(loadDraft()); }, []);
   useEffect(() => { saveDraft(form); }, [form]);
 
+  // Track onboarding-started event
+  useEffect(() => {
+    try {
+      const sid = localStorage.getItem("ff_sid") || "s" + Date.now();
+      const city = localStorage.getItem("ff-selected-city") || "";
+      fetch("/api/analytics/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "onboarding-started",
+          path: "/onboarding",
+          city,
+          sessionId: sid,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {}
+  }, []);
+
   const update = useCallback((patch: Partial<FormData>) => {
     setForm((prev) => ({ ...prev, ...patch }));
     setError(null);
@@ -169,6 +188,24 @@ export default function OnboardingPage() {
       if (!vendorRes.ok) throw new Error("Failed to create vendor");
       const vendorData = await vendorRes.json();
       const vendorId = vendorData.vendor.id;
+
+      // Track onboarding-completed event
+      try {
+        const sid = localStorage.getItem("ff_sid") || "s" + Date.now();
+        const city = localStorage.getItem("ff-selected-city") || "";
+        fetch("/api/analytics/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event: "onboarding-completed",
+            path: "/onboarding",
+            city,
+            sessionId: sid,
+            properties: JSON.stringify({ vendorId, businessName: form.businessName }),
+          }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch {}
 
       setCreatedVendorId(vendorId);
       setCompleted(true);

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Star, Clock, Leaf, Package, Store, Sparkles } from "lucide-react";
 import { type CityDef, CITIES } from "@/lib/data";
+import WaitlistSignup from "@/components/WaitlistSignup";
 
 interface Vendor {
   id: number;
@@ -371,7 +372,7 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
       </div>
 
       {/* Other cities */}
-      <div className="max-w-lg mx-auto w-full px-4 mb-12">
+      <div className="max-w-lg mx-auto w-full px-4 mb-8">
         <h2 className="text-lg font-bold font-serif text-ink mb-3">More Cities</h2>
         <div className="flex flex-wrap gap-2">
           {CITIES.filter(
@@ -386,6 +387,11 @@ export default function CityPageClient({ city, vendorCount, freshCount, categori
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* Waitlist Signup */}
+      <div className="max-w-lg mx-auto w-full px-4 mb-12">
+        <WaitlistSignup cityName={city.name} variant="city" />
       </div>
 
       <div className="safe-bottom" />

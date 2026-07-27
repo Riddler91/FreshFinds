@@ -11,16 +11,42 @@ import {
   Lock,
   ArrowLeft,
   RefreshCw,
+  TrendingUp,
+  Mail,
+  Store,
+  ShoppingBag,
+  UserCheck,
 } from "lucide-react";
+
+interface WaitlistEntry {
+  email: string;
+  city: string | null;
+  user_type: string | null;
+  created_at: string;
+}
 
 interface Stats {
   totalViews: number;
   todayViews: number;
+  weekViews: number;
   uniqueVisitors: number;
   uniqueTodayVisitors: number;
+  uniqueWeekVisitors: number;
   byCity: { city: string; count: number }[];
   byPage: { path: string; count: number }[];
-  recent: { path: string; city: string | null; session_id: string; timestamp: string }[];
+  recent: { path: string; city: string | null; session_id: string; referrer?: string; timestamp: string }[];
+  funnel?: {
+    onboardingStarted: number;
+    onboardingCompleted: number;
+    conversionRate: number;
+  };
+  waitlist?: {
+    total: number;
+    buyers: number;
+    sellers: number;
+    today: number;
+    recent: WaitlistEntry[];
+  };
 }
 
 function formatTime(iso: string) {
@@ -88,7 +114,6 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/analytics?password=${encodeURIComponent(password)}`);
       if (res.ok) {
-        // Set a simple session cookie (not httpOnly but functional)
         document.cookie = "ff_admin=true; path=/; max-age=86400; SameSite=Lax";
         setAuthenticated(true);
         const data = await res.json();
@@ -215,16 +240,16 @@ export default function AdminPage() {
                 color="honey"
               />
               <StatCard
-                icon={<Users className="w-5 h-5" />}
-                label="Unique Visitors"
-                value={stats.uniqueVisitors.toLocaleString()}
-                color="terra"
+                icon={<TrendingUp className="w-5 h-5" />}
+                label="This Week"
+                value={stats.weekViews.toLocaleString()}
+                color="fresh"
               />
               <StatCard
                 icon={<Users className="w-5 h-5" />}
-                label="Today's Uniques"
-                value={stats.uniqueTodayVisitors.toLocaleString()}
-                color="fresh"
+                label="Unique (Week)"
+                value={stats.uniqueWeekVisitors.toLocaleString()}
+                color="terra"
               />
             </div>
 
@@ -302,6 +327,139 @@ export default function AdminPage() {
               </Panel>
             </div>
 
+            {/* Vendor Signup Funnel */}
+            {stats.funnel && (
+              <Panel
+                icon={<UserCheck className="w-4 h-4" />}
+                title="Vendor Signup Funnel"
+              >
+                <div className="py-3">
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="bg-sage-50 rounded-xl p-3 flex-1 text-center">
+                      <p className="text-2xl font-bold text-sage-700">
+                        {stats.funnel.onboardingStarted}
+                      </p>
+                      <p className="text-xs text-sage-600 font-medium">
+                        Started Onboarding
+                      </p>
+                    </div>
+                    <div className="text-ink-muted text-lg">→</div>
+                    <div className="bg-terra-50 rounded-xl p-3 flex-1 text-center">
+                      <p className="text-2xl font-bold text-terra-700">
+                        {stats.funnel.onboardingCompleted}
+                      </p>
+                      <p className="text-xs text-terra-600 font-medium">
+                        Completed
+                      </p>
+                    </div>
+                  </div>
+                  {stats.funnel.onboardingStarted > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-ink-muted font-medium">
+                          Conversion Rate
+                        </span>
+                        <span className="text-xs font-bold text-ink">
+                          {stats.funnel.conversionRate}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-cream-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-sage-500 rounded-full transition-all"
+                          style={{ width: `${Math.max(stats.funnel.conversionRate, 3)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {stats.funnel.onboardingStarted === 0 && (
+                    <p className="text-sm text-ink-muted text-center py-2">
+                      No onboarding activity yet
+                    </p>
+                  )}
+                </div>
+              </Panel>
+            )}
+
+            {/* Waitlist */}
+            {stats.waitlist && (
+              <Panel
+                icon={<Mail className="w-4 h-4" />}
+                title="Join the Waitlist"
+              >
+                <div className="py-3">
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="bg-honey-50 rounded-xl p-3 text-center">
+                      <p className="text-2xl font-bold text-honey-700">
+                        {stats.waitlist.total}
+                      </p>
+                      <p className="text-xs text-honey-600 font-medium">Total</p>
+                    </div>
+                    <div className="bg-sage-50 rounded-xl p-3 text-center">
+                      <p className="text-2xl font-bold text-sage-700">
+                        {stats.waitlist.buyers}
+                      </p>
+                      <p className="text-xs text-sage-600 font-medium flex items-center justify-center gap-1">
+                        <ShoppingBag className="w-3 h-3" /> Buyers
+                      </p>
+                    </div>
+                    <div className="bg-terra-50 rounded-xl p-3 text-center">
+                      <p className="text-2xl font-bold text-terra-700">
+                        {stats.waitlist.sellers}
+                      </p>
+                      <p className="text-xs text-terra-600 font-medium flex items-center justify-center gap-1">
+                        <Store className="w-3 h-3" /> Sellers
+                      </p>
+                    </div>
+                  </div>
+                  {stats.waitlist.recent.length > 0 && (
+                    <>
+                      <h3 className="text-xs font-bold text-ink-muted uppercase tracking-wider mb-2">
+                        Recent Signups
+                      </h3>
+                      <div className="divide-y divide-cream-100">
+                        {stats.waitlist.recent.map((entry, i) => (
+                          <div
+                            key={i}
+                            className="py-2 flex items-center justify-between text-sm"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-xs text-ink truncate">
+                                {entry.email}
+                              </span>
+                              {entry.user_type && (
+                                <span
+                                  className={`text-xs px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${
+                                    entry.user_type === "seller"
+                                      ? "bg-terra-50 text-terra-600"
+                                      : "bg-sage-50 text-sage-600"
+                                  }`}
+                                >
+                                  {entry.user_type === "seller" ? (
+                                    <Store className="w-3 h-3 inline mr-0.5" />
+                                  ) : (
+                                    <ShoppingBag className="w-3 h-3 inline mr-0.5" />
+                                  )}
+                                  {entry.user_type}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-ink-muted shrink-0 ml-2">
+                              {formatTime(entry.created_at)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {stats.waitlist.total === 0 && (
+                    <p className="text-sm text-ink-muted text-center py-2">
+                      No waitlist signups yet
+                    </p>
+                  )}
+                </div>
+              </Panel>
+            )}
+
             {/* Recent Activity */}
             <Panel
               icon={<Clock className="w-4 h-4" />}
@@ -325,6 +483,11 @@ export default function AdminPage() {
                         {r.city && (
                           <span className="text-xs text-sage-600 bg-sage-50 px-2 py-0.5 rounded-full shrink-0">
                             {r.city}
+                          </span>
+                        )}
+                        {r.referrer && (
+                          <span className="text-xs text-ink-muted truncate max-w-[120px] hidden md:inline" title={r.referrer}>
+                            via {new URL(r.referrer).hostname || r.referrer}
                           </span>
                         )}
                       </div>

@@ -79,5 +79,24 @@ export const pageViews = sqliteTable("page_views", {
   path: text("path").notNull(),
   city: text("city"),
   sessionId: text("session_id").notNull(),
+  referrer: text("referrer"),
   timestamp: text("timestamp").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const analyticsEvents = sqliteTable("analytics_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  event: text("event").notNull(),
+  path: text("path"),
+  city: text("city"),
+  sessionId: text("session_id").notNull(),
+  properties: text("properties"),
+  timestamp: text("timestamp").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const waitlist = sqliteTable("waitlist", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull().unique(),
+  city: text("city"),
+  userType: text("user_type"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });

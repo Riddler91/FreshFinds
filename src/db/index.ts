@@ -36,6 +36,12 @@ export function getRawDb(): Database.Database {
 
 /** Ensure tables exist (idempotent — creates only if not exists) */
 function ensureTables(sqlite: Database.Database) {
+  // Migration: add referrer column to page_views if it doesn't exist
+  try {
+    sqlite.exec(`ALTER TABLE page_views ADD COLUMN referrer TEXT`);
+  } catch {
+    // Column already exists — safe to ignore
+  }
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS vendors (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,7 +122,26 @@ function ensureTables(sqlite: Database.Database) {
       path TEXT NOT NULL,
       city TEXT,
       session_id TEXT NOT NULL,
+      referrer TEXT,
       timestamp TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event TEXT NOT NULL,
+      path TEXT,
+      city TEXT,
+      session_id TEXT NOT NULL,
+      properties TEXT,
+      timestamp TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS waitlist (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      city TEXT,
+      user_type TEXT,
+      created_at TEXT NOT NULL
     );
   `);
 }

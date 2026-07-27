@@ -18,6 +18,7 @@ import {
   Crosshair,
 } from "lucide-react";
 import { CITIES, getCitiesGroupedByState, type CityDef } from "@/lib/data";
+import WaitlistSignup from "@/components/WaitlistSignup";
 
 /* ── Types ────────────────────────────────────────────────────── */
 interface Vendor {
@@ -1139,6 +1140,18 @@ export default function MapPage() {
 
       {/* ─── Bottom Nav spacer ──────────────────────────────────── */}
       <div className="safe-bottom" />
+
+      {/* ─── Waitlist Signup ─────────────────────────────────────── */}
+      {!showCityOverlay && !detectingLocation && (
+        <div className="absolute bottom-32 left-0 right-0 z-10 px-4 pointer-events-none">
+          <div className="max-w-md mx-auto pointer-events-auto">
+            <WaitlistSignup
+              cityName={selectedCity?.name}
+              variant="inline"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

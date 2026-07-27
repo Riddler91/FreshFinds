@@ -20,14 +20,36 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "FreshFinds — Local Food, Fresh Right Now",
+  metadataBase: new URL(process.env.SITE_URL || "https://freshfinds.app"),
+  title: {
+    default: "FreshFinds — Discover Local Homemade Food Near You",
+    template: "%s — FreshFinds",
+  },
   description:
-    "Discover fresh, local, homemade food near you. Browse farm stands, cottage food vendors, and specialty producers in your area.",
+    "Discover fresh, local, homemade food near you. Browse farm stands, cottage food vendors, and specialty producers in your area. Find sourdough baked today, eggs gathered this morning, and produce picked fresh.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     title: "FreshFinds",
     statusBarStyle: "default",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "FreshFinds",
+    title: "FreshFinds — Discover Local Homemade Food Near You",
+    description:
+      "Discover fresh, local, homemade food near you. Browse farm stands, cottage food vendors, and specialty producers in your area.",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FreshFinds — Discover Local Homemade Food Near You",
+    description:
+      "Discover fresh, local, homemade food near you. Browse farm stands, cottage food vendors, and specialty producers.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
   other: {
     "mobile-web-app-capable": "yes",
@@ -59,6 +81,29 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <meta name="theme-color" content="#7C9082" />
         <meta name="format-detection" content="telephone=no" />
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "FreshFinds",
+              url: "https://freshfinds.app",
+              description:
+                "Discover fresh, local, homemade food near you. Browse farm stands, cottage food vendors, and specialty producers.",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate:
+                    "https://freshfinds.app/search?q={search_term_string}",
+                },
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
       </head>
       <body className="min-h-screen bg-cream-50 text-ink antialiased font-sans overscroll-none">
         <main className="relative">{children}</main>
@@ -75,13 +120,15 @@ export default function RootLayout({
       localStorage.setItem('ff_sid', sessionId);
     }
     var city = localStorage.getItem('ff-selected-city') || '';
-    fetch('/api/analytics', {
+    var referrer = document.referrer || '';
+    fetch('/api/analytics/pageview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         path: window.location.pathname,
         city: city,
-        sessionId: sessionId
+        sessionId: sessionId,
+        referrer: referrer
       }),
       keepalive: true
     }).catch(function(){});
