@@ -81,6 +81,46 @@ export const BLOG_POSTS: BlogPost[] = [
     image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80",
     tags: ["Kansas", "cottage food", "home bakery", "food law", "Wichita", "Kansas City", "Lawrence"],
   },
+  {
+    slug: "sell-homemade-food-florida-cottage-food-law-guide-2026",
+    title: "How to Sell Homemade Food in Florida — A Complete Guide to Cottage Food Laws (2026)",
+    description:
+      "Florida's cottage food law requires zero permits, licenses, or inspections — and has a $250,000 annual sales cap, one of the highest in the nation. Start your home bakery in Miami, Tampa, or Orlando for $0.",
+    date: "2026-07-28",
+    author: "FreshFinds Team",
+    image: "https://images.unsplash.com/photo-1535498730771-e735b998cd64?w=1200&q=80",
+    tags: ["Florida", "cottage food", "home bakery", "food law", "Miami", "Tampa", "Orlando", "Jacksonville"],
+  },
+  {
+    slug: "sell-homemade-food-georgia-cottage-food-law-guide-2026",
+    title: "How to Sell Homemade Food in Georgia — A Complete Guide to Cottage Food Laws (2026)",
+    description:
+      "Georgia has no sales cap, allows sales to restaurants and retail stores, and only requires a $7 food safety course. One of the most permissive cottage food states in the country.",
+    date: "2026-07-28",
+    author: "FreshFinds Team",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80",
+    tags: ["Georgia", "cottage food", "home bakery", "food law", "Atlanta", "Savannah", "Athens"],
+  },
+  {
+    slug: "sell-homemade-food-alabama-cottage-food-law-guide-2026",
+    title: "How to Sell Homemade Food in Alabama — A Complete Guide to Cottage Food Laws (2026)",
+    description:
+      "Alabama's 2021 amendment removed the sales cap and expanded allowed foods. Just complete a food safety course and get county health department approval to start selling.",
+    date: "2026-07-28",
+    author: "FreshFinds Team",
+    image: "https://images.unsplash.com/photo-1485963631004-f2f00b1d6606?w=1200&q=80",
+    tags: ["Alabama", "cottage food", "home bakery", "food law", "Birmingham", "Huntsville", "Montgomery", "Mobile"],
+  },
+  {
+    slug: "sell-homemade-food-mississippi-cottage-food-law-guide-2026",
+    title: "How to Sell Homemade Food in Mississippi — A Complete Guide to Cottage Food Laws (2026)",
+    description:
+      "Mississippi requires zero paperwork to start — no permit, license, or inspection. But with a $35K sales cap and no online sales, here's what MS home bakers need to know.",
+    date: "2026-07-28",
+    author: "FreshFinds Team",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80",
+    tags: ["Mississippi", "cottage food", "home bakery", "food law", "Jackson", "Oxford", "Hattiesburg", "Gulfport"],
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {

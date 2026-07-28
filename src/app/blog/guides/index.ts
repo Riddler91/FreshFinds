@@ -22,6 +22,22 @@ import {
   KansasCottageFoodGuide,
   ksTocItems,
 } from "./kansas";
+import {
+  FloridaCottageFoodGuide,
+  flTocItems,
+} from "./florida";
+import {
+  GeorgiaCottageFoodGuide,
+  gaTocItems,
+} from "./georgia";
+import {
+  AlabamaCottageFoodGuide,
+  alTocItems,
+} from "./alabama";
+import {
+  MississippiCottageFoodGuide,
+  msTocItems,
+} from "./mississippi";
 
 export interface GuideData {
   Component: React.ComponentType;
@@ -59,6 +75,26 @@ export const GUIDE_REGISTRY: Record<string, GuideData> = {
     Component: KansasCottageFoodGuide,
     tocItems: ksTocItems,
     stateName: "Kansas",
+  },
+  "sell-homemade-food-florida-cottage-food-law-guide-2026": {
+    Component: FloridaCottageFoodGuide,
+    tocItems: flTocItems,
+    stateName: "Florida",
+  },
+  "sell-homemade-food-georgia-cottage-food-law-guide-2026": {
+    Component: GeorgiaCottageFoodGuide,
+    tocItems: gaTocItems,
+    stateName: "Georgia",
+  },
+  "sell-homemade-food-alabama-cottage-food-law-guide-2026": {
+    Component: AlabamaCottageFoodGuide,
+    tocItems: alTocItems,
+    stateName: "Alabama",
+  },
+  "sell-homemade-food-mississippi-cottage-food-law-guide-2026": {
+    Component: MississippiCottageFoodGuide,
+    tocItems: msTocItems,
+    stateName: "Mississippi",
   },
 };
 
