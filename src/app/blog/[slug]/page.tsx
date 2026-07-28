@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BLOG_POSTS, getBlogPost, getBlogMetadata } from "@/lib/blog";
 import { ArrowLeft, Clock, User, Share2 } from "lucide-react";
 import { ShareButtons } from "@/components/ShareButtons";
+import { getGuideForSlug } from "../guides";
 
 export async function generateStaticParams() {
   return BLOG_POSTS.map((post) => ({ slug: post.slug }));
@@ -29,6 +30,11 @@ export default async function BlogPost({
   if (!post) {
     notFound();
   }
+
+  const guide = getGuideForSlug(slug);
+  const GuideComponent = guide?.Component;
+  const tocItems = guide?.tocItems ?? TN_TOC_ITEMS;
+  const stateName = guide?.stateName ?? "Tennessee";
 
   return (
     <div className="min-h-screen bg-cream-50">
@@ -95,7 +101,7 @@ export default async function BlogPost({
             📋 Table of Contents
           </h2>
           <ul className="space-y-1.5">
-            {TOC_ITEMS.map((item) => (
+            {tocItems.map((item) => (
               <li key={item.id}>
                 <a
                   href={`#${item.id}`}
@@ -110,7 +116,7 @@ export default async function BlogPost({
 
         {/* Article body */}
         <div className="prose-content">
-          <TennesseeCottageFoodGuide />
+          {GuideComponent ? <GuideComponent /> : <TennesseeCottageFoodGuide />}
         </div>
 
         {/* Share */}
@@ -127,11 +133,11 @@ export default async function BlogPost({
         {/* CTA */}
         <div className="mt-10 bg-sage-50 rounded-3xl p-8 text-center border border-sage-200/60 shadow-warm">
           <h2 className="text-xl font-bold font-serif text-ink mb-3">
-            Ready to start selling in Tennessee?
+            Ready to start selling in {stateName}?
           </h2>
           <p className="text-ink-light text-sm mb-6 max-w-md mx-auto leading-relaxed">
             FreshFinds helps home bakers and cottage food vendors get discovered by
-            local customers in Tennessee. List your products for free — no fees,
+            local customers in {stateName}. List your products for free — no fees,
             ever.
           </p>
           <Link
@@ -143,7 +149,7 @@ export default async function BlogPost({
           <p className="text-xs text-ink-muted mt-3">
             Already selling?{" "}
             <Link href="/" className="text-sage-600 font-bold hover:underline">
-              Browse vendors in Tennessee →
+              Browse vendors in {stateName} →
             </Link>
           </p>
         </div>
@@ -152,8 +158,8 @@ export default async function BlogPost({
   );
 }
 
-/** Table of contents items for the TN guide */
-const TOC_ITEMS = [
+/** Table of contents items for the TN guide (fallback) */
+const TN_TOC_ITEMS = [
   { id: "what-is-cottage-food", label: "What Is Tennessee's Cottage Food Law?" },
   { id: "foods-you-can-sell", label: "What Foods Can You Sell?" },
   { id: "foods-you-cannot-sell", label: "What Foods Can't You Sell?" },
@@ -166,7 +172,7 @@ const TOC_ITEMS = [
 ];
 
 /* ────────────────────────────────────────────────────────────────────────
-   Tennessee Cottage Food Guide — Full Article Content
+   Tennessee Cottage Food Guide — Full Article Content (fallback)
    ──────────────────────────────────────────────────────────────────────── */
 function TennesseeCottageFoodGuide() {
   return (
