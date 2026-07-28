@@ -15,9 +15,17 @@ export default function Header() {
             FreshFinds
           </span>
         </Link>
-        <span className="text-xs text-ink-muted bg-cream-100 px-2.5 py-1 rounded-full font-medium border border-cream-200/50">
-          Austin, TX
-        </span>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/blog"
+            className="text-xs font-semibold text-sage-600 hover:text-sage-500 transition-colors hidden sm:block"
+          >
+            📖 Guides
+          </Link>
+          <span className="text-xs text-ink-muted bg-cream-100 px-2.5 py-1 rounded-full font-medium border border-cream-200/50">
+            Austin, TX
+          </span>
+        </div>
       </div>
     </header>
   );
