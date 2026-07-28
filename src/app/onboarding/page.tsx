@@ -72,6 +72,7 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [createdVendorId, setCreatedVendorId] = useState<number | null>(null);
+  const [createdEditToken, setCreatedEditToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { setForm(loadDraft()); }, []);
@@ -147,6 +148,7 @@ export default function OnboardingPage() {
       if (!vendorRes.ok) throw new Error("Failed to create vendor");
       const vendorData = await vendorRes.json();
       const vendorId = vendorData.vendor.id;
+      const editToken = vendorData.vendor.editToken;
 
       // Track onboarding-completed event
       try {
@@ -167,6 +169,7 @@ export default function OnboardingPage() {
       } catch {}
 
       setCreatedVendorId(vendorId);
+      setCreatedEditToken(editToken);
       setCompleted(true);
       clearDraft();
     } catch (err: any) {
@@ -187,9 +190,14 @@ export default function OnboardingPage() {
           <h1 className="text-2xl font-bold font-serif text-ink mb-3">
             🎉 Your storefront is live!
           </h1>
-          <p className="text-ink-muted mb-8 max-w-xs leading-relaxed">
+          <p className="text-ink-muted mb-2 max-w-xs leading-relaxed">
             {form.businessName} is now on FreshFinds. Add your first product to start attracting customers! 🌿
           </p>
+          {createdEditToken && (
+            <div className="bg-honey-50 border border-honey-200 rounded-2xl p-4 mb-6 text-sm text-honey-800 font-semibold">
+              📌 Bookmark this page! This is how you edit your storefront.
+            </div>
+          )}
 
           <div className="bg-card rounded-3xl shadow-warm border border-cream-200/40 p-6 w-full space-y-3 mb-6">
             {[
@@ -213,9 +221,9 @@ export default function OnboardingPage() {
             >
               Add your first product →
             </Link>
-            {createdVendorId && (
+            {createdVendorId && createdEditToken && (
               <Link
-                href={`/vendor/${createdVendorId}`}
+                href={`/vendor/${createdVendorId}/edit?token=${createdEditToken}`}
                 className="block w-full bg-card text-sage-600 font-bold py-3.5 rounded-2xl border-2 border-sage-200 hover:border-sage-400 transition-all text-center"
               >
                 Complete your profile →

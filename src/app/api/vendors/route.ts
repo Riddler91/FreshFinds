@@ -164,10 +164,13 @@ export async function POST(request: NextRequest) {
   const db = getRawDb();
 
   const now = new Date().toISOString();
+  const editToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 
   const result = db.prepare(
-    `INSERT INTO vendors (name, business_name, email, phone, address, lat, lng, bio, photo_url, verified, category_name, category_slug, category_icon, website, social_links, state, city, accepts_messages, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO vendors (name, business_name, email, phone, address, lat, lng, bio, photo_url, verified, category_name, category_slug, category_icon, website, social_links, state, city, accepts_messages, edit_token, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     body.name || "",
     body.businessName || "",
@@ -186,6 +189,7 @@ export async function POST(request: NextRequest) {
     body.state || "TX",
     body.city || "Austin",
     body.acceptsMessages ? 1 : 0,
+    editToken,
     now
   );
 
@@ -209,8 +213,67 @@ export async function POST(request: NextRequest) {
     socialLinks: body.socialLinks || "",
     state: body.state || "TX",
     city: body.city || "Austin",
+    editToken,
     createdAt: now,
   };
 
   return NextResponse.json({ vendor }, { status: 201 });
+}
+
+// ── PATCH ────────────────────────────────────────────────────────
+export async function PATCH(request: NextRequest) {
+  const body = await request.json();
+  const db = getRawDb();
+
+  const { id, token, ...fields } = body;
+
+  if (!id || !token) {
+    return NextResponse.json({ error: "id and token are required" }, { status: 400 });
+  }
+
+  // Verify token
+  const vendor = db.prepare("SELECT * FROM vendors WHERE id = ?").get(id) as any;
+  if (!vendor) {
+    return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+  }
+  if (vendor.edit_token !== token) {
+    return NextResponse.json({ error: "Invalid edit token" }, { status: 403 });
+  }
+
+  // Build update query dynamically from allowed fields
+  const allowedFields: Record<string, string> = {
+    businessName: "business_name",
+    bio: "bio",
+    photoUrl: "photo_url",
+    phone: "phone",
+    website: "website",
+    categoryName: "category_name",
+    categorySlug: "category_slug",
+    categoryIcon: "category_icon",
+    city: "city",
+    acceptsMessages: "accepts_messages",
+  };
+
+  const sets: string[] = [];
+  const values: any[] = [];
+
+  for (const [key, col] of Object.entries(allowedFields)) {
+    if (key in fields) {
+      sets.push(`${col} = ?`);
+      if (key === "acceptsMessages") {
+        values.push(fields[key] ? 1 : 0);
+      } else {
+        values.push(fields[key]);
+      }
+    }
+  }
+
+  if (sets.length === 0) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+  }
+
+  values.push(id);
+  db.prepare(`UPDATE vendors SET ${sets.join(", ")} WHERE id = ?`).run(...values);
+
+  return NextResponse.json({ success: true });
 }

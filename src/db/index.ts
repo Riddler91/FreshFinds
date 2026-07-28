@@ -42,6 +42,12 @@ function ensureTables(sqlite: Database.Database) {
   } catch {
     // Column already exists — safe to ignore
   }
+  // Migration: add edit_token column to vendors if it doesn't exist
+  try {
+    sqlite.exec(`ALTER TABLE vendors ADD COLUMN edit_token TEXT`);
+  } catch {
+    // Column already exists — safe to ignore
+  }
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS vendors (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,6 +69,7 @@ function ensureTables(sqlite: Database.Database) {
       state TEXT NOT NULL DEFAULT 'TX',
       city TEXT NOT NULL DEFAULT 'Austin',
       accepts_messages INTEGER NOT NULL DEFAULT 0,
+      edit_token TEXT,
       created_at TEXT NOT NULL
     );
 

@@ -4,4 +4,5 @@ $ next start -p 3000 -H 0.0.0.0
    - Network:      http://0.0.0.0:3000
 
  ✓ Starting...
- ✓ Ready in 572ms
+[Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id]
+error: script "start" exited with code 1

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -16,6 +16,7 @@ import {
   Leaf,
   ChefHat,
   Navigation,
+  Pencil,
 } from "lucide-react";
 
 /* ── Types ─────────────────────────────────────────────────── */
@@ -120,7 +121,9 @@ function memberSince(dateStr: string): string {
 /* ── Component ─────────────────────────────────────────────── */
 export default function VendorProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const vendorId = params.id as string;
+  const editToken = searchParams.get("token") || "";
 
   const [vendor, setVendor] = useState<VendorProfile | null>(null);
   const [listings, setListings] = useState<ListingItem[]>([]);
@@ -297,16 +300,27 @@ export default function VendorProfilePage() {
         </Link>
 
         {/* Share button */}
-        <button
-          className="absolute top-4 right-4 z-10 w-10 h-10 bg-card/90 backdrop-blur rounded-full flex items-center justify-center shadow-warm-lg text-ink hover:bg-card transition-colors"
-          onClick={() => {
-            if (navigator.share) {
-              navigator.share({ title: vendor.businessName, url: window.location.href });
-            }
-          }}
-        >
-          <Share2 className="w-5 h-5" />
-        </button>
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          {editToken && (
+            <Link
+              href={`/vendor/${vendorId}/edit?token=${editToken}`}
+              className="w-10 h-10 bg-card/90 backdrop-blur rounded-full flex items-center justify-center shadow-warm-lg text-sage-600 hover:bg-card transition-colors"
+              title="Edit Storefront"
+            >
+              <Pencil className="w-4 h-4" />
+            </Link>
+          )}
+          <button
+            className="w-10 h-10 bg-card/90 backdrop-blur rounded-full flex items-center justify-center shadow-warm-lg text-ink hover:bg-card transition-colors"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: vendor.businessName, url: window.location.href });
+              }
+            }}
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* ─── Info card (overlaps cover) ──────────────────────── */}

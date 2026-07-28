@@ -41,6 +41,7 @@ function createTables() {
       state TEXT NOT NULL DEFAULT 'TX',
       city TEXT NOT NULL DEFAULT 'Austin',
       accepts_messages INTEGER NOT NULL DEFAULT 0,
+      edit_token TEXT,
       created_at TEXT NOT NULL
     );
 
