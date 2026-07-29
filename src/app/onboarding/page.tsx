@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, MapPin, Leaf } from "lucide-react";
+import { ArrowLeft, Check, MapPin, Leaf, Clock, Sparkles } from "lucide-react";
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface FormData {
@@ -74,8 +74,19 @@ export default function OnboardingPage() {
   const [createdVendorId, setCreatedVendorId] = useState<number | null>(null);
   const [createdEditToken, setCreatedEditToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  useEffect(() => { setForm(loadDraft()); }, []);
+  useEffect(() => {
+    const draft = loadDraft();
+    // Pre-fill city from localStorage if available and not already set
+    if (!draft.city && typeof window !== "undefined") {
+      try {
+        const savedCity = localStorage.getItem("ff-selected-city") || "";
+        if (savedCity) draft.city = savedCity;
+      } catch {}
+    }
+    setForm(draft);
+  }, []);
   useEffect(() => { saveDraft(form); }, [form]);
 
   // Track onboarding-started event
@@ -102,12 +113,32 @@ export default function OnboardingPage() {
     setError(null);
   }, []);
 
+  const markTouched = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
   /* ── Validation ──────────────────────────────────────────── */
   const isValid =
     form.businessName.trim().length >= 2 &&
     form.category !== "" &&
     form.email.trim().includes("@") &&
     form.city.trim().length >= 1;
+
+  const fieldError = (field: keyof FormData): string | null => {
+    if (!touched[field]) return null;
+    switch (field) {
+      case "businessName":
+        return form.businessName.trim().length < 2 ? "Enter at least 2 characters" : null;
+      case "category":
+        return form.category === "" ? "Pick a category" : null;
+      case "email":
+        return !form.email.trim().includes("@") ? "Enter a valid email" : null;
+      case "city":
+        return form.city.trim().length < 1 ? "Enter your city" : null;
+      default:
+        return null;
+    }
+  };
 
   /* ── Submit ──────────────────────────────────────────────── */
   const handleSubmit = async () => {
@@ -122,17 +153,14 @@ export default function OnboardingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // Required fields from form
           name: form.businessName,
           businessName: form.businessName,
           email: form.email,
           state: form.state,
           city: form.city,
-          // Category derived from picker
           categoryName: cat.name,
           categorySlug: cat.slug,
           categoryIcon: cat.icon,
-          // Defaults for fields not in simplified form
           phone: "",
           address: form.city,
           lat: 0,
@@ -241,20 +269,50 @@ export default function OnboardingPage() {
     );
   }
 
+  /* ── Fields filled count for progress feel ───────────────── */
+  const filledCount = [
+    form.businessName.trim().length >= 2,
+    form.category !== "",
+    form.email.trim().includes("@"),
+    form.city.trim().length >= 1,
+  ].filter(Boolean).length;
+
   /* ── Form ────────────────────────────────────────────────── */
   return (
     <div className="flex flex-col min-h-[100dvh] bg-cream-50">
       {/* Header */}
       <div className="bg-cream-50/95 backdrop-blur-md border-b border-cream-200/60 sticky top-0 z-30">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center">
-          <Link href="/" className="text-ink-muted hover:text-ink mr-3 transition-colors">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <Link href="/" className="text-ink-muted hover:text-ink transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <h1 className="text-lg font-bold font-serif text-ink">Sell on FreshFinds</h1>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-sage-600 bg-sage-50 px-2.5 py-1 rounded-full border border-sage-200/40">
+            <Clock className="w-3 h-3" /> ~30s
+          </div>
         </div>
       </div>
 
       <div className="flex-1 max-w-lg mx-auto w-full px-4 py-6">
+        {/* Progress bar */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 flex-1 bg-cream-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-sage-500 rounded-full transition-all duration-300"
+                style={{ width: `${(filledCount / 4) * 100}%` }}
+              />
+            </div>
+            <span className="text-xs font-bold text-ink-muted">
+              {filledCount}/4
+            </span>
+          </div>
+          <p className="text-xs text-ink-muted mt-1.5 flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-honey-500" />
+            Creating your storefront takes about 30 seconds
+          </p>
+        </div>
+
         {/* Error banner */}
         {error && (
           <div className="mb-4 bg-terra-50 border border-terra-200 rounded-2xl p-4 text-sm text-terra-700 font-medium">
@@ -277,9 +335,15 @@ export default function OnboardingPage() {
                 type="text"
                 value={form.businessName}
                 onChange={(e) => update({ businessName: e.target.value })}
+                onBlur={() => markTouched("businessName")}
                 placeholder="e.g., ATX Sourdough"
-                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none transition-shadow font-sans"
+                className={`w-full px-4 py-3 bg-cream-50 border rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none transition-shadow font-sans ${
+                  fieldError("businessName") ? "border-terra-300" : "border-cream-200"
+                }`}
               />
+              {fieldError("businessName") && (
+                <p className="text-xs text-terra-500 mt-1 font-medium">{fieldError("businessName")}</p>
+              )}
             </div>
 
             {/* Category */}
@@ -287,13 +351,16 @@ export default function OnboardingPage() {
               <label className="block text-sm font-bold text-ink mb-1.5">
                 What you make <span className="text-terra-500">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.slug}
                     type="button"
-                    onClick={() => update({ category: cat.slug })}
-                    className={`text-sm px-3 py-3 rounded-2xl border text-left transition-all font-semibold ${
+                    onClick={() => {
+                      update({ category: cat.slug });
+                      markTouched("category");
+                    }}
+                    className={`text-xs px-2.5 py-2.5 rounded-2xl border text-left transition-all font-semibold ${
                       form.category === cat.slug
                         ? "border-sage-400 bg-sage-50 text-sage-700 shadow-warm"
                         : "border-cream-200 text-ink-light hover:border-sage-200 hover:bg-cream-50"
@@ -303,6 +370,9 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
+              {fieldError("category") && (
+                <p className="text-xs text-terra-500 mt-1 font-medium">{fieldError("category")}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -314,9 +384,15 @@ export default function OnboardingPage() {
                 type="email"
                 value={form.email}
                 onChange={(e) => update({ email: e.target.value })}
+                onBlur={() => markTouched("email")}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
+                className={`w-full px-4 py-3 bg-cream-50 border rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans ${
+                  fieldError("email") ? "border-terra-300" : "border-cream-200"
+                }`}
               />
+              {fieldError("email") && (
+                <p className="text-xs text-terra-500 mt-1 font-medium">{fieldError("email")}</p>
+              )}
             </div>
 
             {/* State */}
@@ -333,7 +409,8 @@ export default function OnboardingPage() {
                   <option key={s.code} value={s.code}>{s.name}</option>
                 ))}
               </select>
-              <p className="text-xs text-ink-muted mt-1.5 font-medium">
+              <p className="text-xs text-ink-muted mt-1.5 font-medium flex items-center gap-1">
+                <CheckCircleMini className="text-sage-500" />
                 {(STATES.find((s) => s.code === form.state) || STATES[0]).compliance}
               </p>
             </div>
@@ -347,9 +424,15 @@ export default function OnboardingPage() {
                 type="text"
                 value={form.city}
                 onChange={(e) => update({ city: e.target.value })}
+                onBlur={() => markTouched("city")}
                 placeholder="e.g., Austin"
-                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans"
+                className={`w-full px-4 py-3 bg-cream-50 border rounded-2xl text-sm text-ink placeholder-ink-muted/50 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 outline-none font-sans ${
+                  fieldError("city") ? "border-terra-300" : "border-cream-200"
+                }`}
               />
+              {fieldError("city") && (
+                <p className="text-xs text-terra-500 mt-1 font-medium">{fieldError("city")}</p>
+              )}
             </div>
           </div>
 
@@ -368,11 +451,11 @@ export default function OnboardingPage() {
                 <span className="animate-spin">⏳</span> Creating...
               </span>
             ) : (
-              "🎉 Create Storefront"
+              `🎉 Create Storefront${isValid ? " — It's Free!" : ""}`
             )}
           </button>
 
-          <p className="text-xs text-ink-muted text-center mt-4 font-medium">
+          <p className="text-xs text-ink-muted text-center mt-3 font-medium">
             You can add photos, a bio, and more details after your storefront is created.
           </p>
         </div>
@@ -380,5 +463,25 @@ export default function OnboardingPage() {
         <div className="h-24" />
       </div>
     </div>
+  );
+}
+
+/* Tiny inline check-circle to avoid importing another icon */
+function CheckCircleMini({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
   );
 }
